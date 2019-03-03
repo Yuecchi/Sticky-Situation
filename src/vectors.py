@@ -1,6 +1,5 @@
 import math
 
-
 # The Vector class
 class Vector:
 
@@ -117,5 +116,4 @@ class Vector:
     # You will need to use the arccosine function:
     # acos in the math library
     def angle(self, other):
-        dot = self.dot(other)
-        return self - (other * (2 * dot))
+        pass
