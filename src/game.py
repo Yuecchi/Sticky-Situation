@@ -5,6 +5,8 @@ except ImportError:
 
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
+from entities   import Player
+from vectors    import Vector
 
 # testing tilesheets
 img = simplegui.load_image('https://i.imgur.com/1v3BBoO.png')
@@ -20,7 +22,7 @@ map = [[3, 3, 3, 3, 3],
        [3, 3, 3, 3, 3]]
 
 tilemap = Tilemap(tilesheet, map)
-
+player = Player(Vector((4, 3)))
 
 
 
