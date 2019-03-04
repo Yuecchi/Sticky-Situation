@@ -4,10 +4,7 @@
     <bookmark url="file://$PROJECT_DIR$/src/gfx.py" line="18" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7adde955-1810-4924-8e7f-35101625ef67" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/src/gfx.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gfx.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/tileEngine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/tileEngine.py" afterDir="false" />
-    </list>
+    <list default="true" id="7adde955-1810-4924-8e7f-35101625ef67" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,8 +25,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/gfx.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="238">
-              <caret line="14" column="20" selection-start-line="14" selection-start-column="20" selection-end-line="14" selection-end-column="20" />
+            <state relative-caret-position="306">
+              <caret line="18" lean-forward="true" selection-start-line="18" selection-end-line="18" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -93,9 +90,9 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
-    <option name="x" value="404" />
-    <option name="y" value="225" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="470" />
+    <option name="y" value="58" />
     <option name="width" value="1309" />
     <option name="height" value="760" />
   </component>
@@ -182,7 +179,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="404" y="225" width="1309" height="760" extended-state="0" />
+    <frame x="485" y="116" width="1309" height="760" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Favorites" side_tool="true" />
@@ -252,8 +249,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/gfx.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
-          <caret line="14" column="20" selection-start-line="14" selection-start-column="20" selection-end-line="14" selection-end-column="20" />
+        <state relative-caret-position="306">
+          <caret line="18" lean-forward="true" selection-start-line="18" selection-end-line="18" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
