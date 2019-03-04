@@ -1,4 +1,7 @@
 from enum import Enum
+import gfx
+
+FRAMEWIDTH, FRAMEHEIGHT = 640, 480
 
 TILESIZE = 32
 HALFSIZE = 16
@@ -12,22 +15,29 @@ class Tiletype(Enum):
 class Tile:
 
     def __init__(self, img, start_index, end_index, animated):
+
+        # reference of the tilesheet from the containing tilesheet class
         self.img = img
         self.cols = self.img.get_width() // TILESIZE
+
 
         self.start_index = start_index
         self.end_index = end_index
         self.current_index = self.start_index.copy()
 
-        print(self.current_index)
-
         self.animated = animated
+        self.animation_speed = 1
+
+    def set_animation_speed(self, speed):
+        self.animation_speed = speed
 
     def draw(self, canvas, x, y):
         pos = (x, y)
         src_pos = (HALFSIZE + (self.current_index[0] * TILESIZE), HALFSIZE +  (self.current_index[1] * TILESIZE))
         canvas.draw_image(self.img, src_pos, TILE_DIMS, pos, TILE_DIMS)
-        if self.animated: self.nextFrame()
+        if self.animated:
+            if gfx.clock.transition(self.animation_speed):
+                self.nextFrame()
 
     def nextFrame(self):
         if self.current_index == self.end_index:
@@ -76,8 +86,17 @@ class Tilesheet:
         width, height = self.img.get_width(), self.img.get_height()
         pos = (width, height)
         center = (width / 2 , height / 2)
-        canvas.draw_image(self.img, center, pos, (320, 240), pos)
+        canvas.draw_image(self.img, center, pos, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2), pos)
 
-class TileMap:
-    pass
+class Tilemap:
+
+    def __init__(self, tilesheet, map):
+        self.tilesheet = tilesheet
+        self.map = map
+
+    def draw(self, canvas):
+        for y in range(len(self.map)):
+            for x in range(len(self.map[0])):
+                self.tilesheet.tiles[self.map[y][x]].draw(canvas, HALFSIZE + (x * TILESIZE), HALFSIZE + (y * TILESIZE))
+
 
