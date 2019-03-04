@@ -94,6 +94,9 @@ class Tilemap:
         self.tilesheet = tilesheet
         self.map = map
 
+    # uses all values in the tilemap to determine which tiles to draw
+    # and dras them to the screen based on their index position in the
+    # tilemap
     def draw(self, canvas):
         for y in range(len(self.map)):
             for x in range(len(self.map[0])):

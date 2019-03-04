@@ -21,12 +21,7 @@ def draw(canvas):
 
     global clock
 
-    game.tilesheet.draw(canvas)
     game.tilemap.draw(canvas)
-
-    #for i in range(game.tilesheet.tilecount):
-    #    game.tilesheet.tiles[i].draw(canvas, HALFSIZE + (TILESIZE * i), HALFSIZE)
-    #canvas.draw_text(str(game.tilesheet.tiles[2].current_index), (0, 64), 16, "White")
 
     clock.tick()
 
