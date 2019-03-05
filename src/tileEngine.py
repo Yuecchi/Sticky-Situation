@@ -27,6 +27,7 @@ class Tile:
 
         self.animated = animated
         self.animation_speed = 1
+        self.updated = False
 
     def set_animation_speed(self, speed):
         self.animation_speed = speed
@@ -35,9 +36,13 @@ class Tile:
         pos = (x, y)
         src_pos = (HALFSIZE + (self.current_index[0] * TILESIZE), HALFSIZE +  (self.current_index[1] * TILESIZE))
         canvas.draw_image(self.img, src_pos, TILE_DIMS, pos, TILE_DIMS)
-        if self.animated:
-            if gfx.clock.transition(self.animation_speed):
-                self.nextFrame()
+        # checks if this tile animation has already been updated
+        if not self.updated:
+            if self.animated:
+                if gfx.clock.transition(self.animation_speed):
+                    self.nextFrame()
+                    # sets the updated flag to true so avoid extra updates
+                    self.updated = True
 
     def nextFrame(self):
         if self.current_index == self.end_index:
@@ -95,6 +100,9 @@ class Tilemap:
         self.map = map
 
     def draw(self, canvas):
+        for i in range(self.tilesheet.tilecount):
+            # resets the update flags on all tiles before drawing them
+            self.tilesheet.tiles[i].updated = False
         for y in range(len(self.map)):
             for x in range(len(self.map[0])):
                 self.tilesheet.tiles[self.map[y][x]].draw(canvas, HALFSIZE + (x * TILESIZE), HALFSIZE + (y * TILESIZE))

@@ -2,6 +2,7 @@ import game
 
 TILESIZE = 32
 HALFSIZE = 16
+TILE_DIMS = (TILESIZE, TILESIZE)
 
 class Clock:
 
@@ -14,19 +15,26 @@ class Clock:
     def transition(self, rate):
         return not(self.t % rate)
 
-clock = Clock()
+class Sprite:
 
+    def __init__(self, img):
+
+        self.img = img
+        self.animation = ((0, 0), (0, 0))
+        self.current_index = (0, 0)
+
+    def draw(self, canvas, x, y):
+        pos = (x, y)
+        src_pos = (HALFSIZE + (self.current_index[0] * TILESIZE), HALFSIZE + (self.current_index[1] * TILESIZE))
+        canvas.draw_image(self.img, src_pos, TILE_DIMS, pos, TILE_DIMS)
+
+clock = Clock()
 
 def draw(canvas):
 
     global clock
 
-    game.tilesheet.draw(canvas)
     game.tilemap.draw(canvas)
-
-    #for i in range(game.tilesheet.tilecount):
-    #    game.tilesheet.tiles[i].draw(canvas, HALFSIZE + (TILESIZE * i), HALFSIZE)
-    #canvas.draw_text(str(game.tilesheet.tiles[2].current_index), (0, 64), 16, "White")
 
     clock.tick()
 
