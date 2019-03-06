@@ -7,17 +7,19 @@ TILESIZE = 32
 HALFSIZE = 16
 TILE_DIMS = (TILESIZE, TILESIZE)
 
-class Tiletype(Enum):
-    EMPTY = 0
-    SOLID = 1
+# tile type constants
+EMPTY = 0
+SOLID = 1
 
 class Tile:
 
-    def __init__(self, img, start_index, end_index, animated):
+    def __init__(self, img, start_index, end_index, animated, type):
 
         # reference of the tilesheet from the containing tilesheet class
         self.img = img
         self.cols = self.img.get_width() // TILESIZE
+
+        self.type = type
 
         self.start_index = start_index
         self.end_index = end_index
@@ -51,7 +53,7 @@ class Tile:
 
 class Tilesheet:
 
-    def __init__(self, img, index):
+    def __init__(self, img, index, types):
 
         # source image for tile sheet
         self.img = img
@@ -61,6 +63,7 @@ class Tilesheet:
         self.cols = self.img.get_width() // TILESIZE
 
         self.index = index
+        self.types = types
         self.tilecount = len(self.index)
 
         # make the tiles
@@ -78,7 +81,7 @@ class Tilesheet:
             end_index[1] = start_index[1] + (start_index[0] + self.index[i] - 1) // self.cols
 
             # create tile and add it to the tile sheet
-            self.tiles.append(Tile(self.img, start_index.copy(), end_index.copy(), animated))
+            self.tiles.append(Tile(self.img, start_index.copy(), end_index.copy(), animated, self.types[i]))
 
             # move to the next tile on the sheet
             start_index = end_index.copy()

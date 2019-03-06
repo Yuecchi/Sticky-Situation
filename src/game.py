@@ -7,23 +7,21 @@ from vectors import Vector
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
 from entities   import Player
-from entities   import  Sprite
-
+from entities   import PushBlock
 
 # testing tilesheets
-#img = simplegui.load_image('https://i.imgur.com/1v3BBoO.png')
-# testsheet = simplegui._load_local_image('../assets/testsheet2.png')
 testsheet = simplegui._load_local_image('../assets/testsheet.png')
 testsprite = simplegui._load_local_image('../assets/testsprite.png')
+testblock = simplegui._load_local_image('../assets/testblock.png')
 
 index = (1, 1, 10, 1)
-#index = (36, 1, 6, 6, 3, 3, 3)
+types = (0, 0, 1 , 1)
 
-tilesheet = Tilesheet(testsheet, index)
+tilesheet = Tilesheet(testsheet, index, types)
 tilesheet.tiles[2].set_animation_speed(8)
 
 t_map = [
-    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+    [2, 3, 3, 3, 3, 3, 3, 3, 3, 2],
     [3, 0, 0, 0, 3, 0, 3, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 3, 0, 0, 3],
     [3, 0, 0, 0, 3, 0, 3, 0, 0, 3],
@@ -31,26 +29,20 @@ t_map = [
     [3, 0, 0, 0, 0, 0, 3, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 3, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+    [2, 3, 3, 3, 3, 3, 3, 3, 3, 2],
 ]
-
-e_map = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-]
-
-# could have a unique identifier attatched to each entity
-# which also links to to a class for whichg entity type it is
 
 tilemap = Tilemap(tilesheet, t_map)
-player = Player(Vector((1, 1)), testsprite)
+
+# testing entities
+e_map = [
+    [
+        0 for x in range(len(t_map[0]))
+    ] for y in range(len(t_map))
+]
+
+player = Player(Vector((1, 1)), testsprite, e_map, tilemap)
+block  = PushBlock(Vector((3, 6)), testblock, e_map, tilemap)
 
 
 

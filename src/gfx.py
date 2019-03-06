@@ -19,6 +19,10 @@ def draw(canvas):
 
     game.tilemap.draw(canvas)
     game.player.draw(canvas)
+    game.block.draw(canvas)
+
+    for i in range(len(game.e_map)):
+        canvas.draw_text(str(game.e_map[i]), (400, 16 + (i * 16)), 16, "White")
 
     clock.tick()
 
