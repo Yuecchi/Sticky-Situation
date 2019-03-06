@@ -10,7 +10,6 @@ TILE_DIMS = (TILESIZE, TILESIZE)
 class Tiletype(Enum):
     EMPTY = 0
     SOLID = 1
-    ICY   = 2
 
 class Tile:
 
@@ -19,7 +18,6 @@ class Tile:
         # reference of the tilesheet from the containing tilesheet class
         self.img = img
         self.cols = self.img.get_width() // TILESIZE
-
 
         self.start_index = start_index
         self.end_index = end_index
@@ -99,6 +97,9 @@ class Tilemap:
         self.tilesheet = tilesheet
         self.map = map
 
+    # uses all values in the tilemap to determine which tiles to draw
+    # and dras them to the screen based on their index position in the
+    # tilemap
     def draw(self, canvas):
         for i in range(self.tilesheet.tilecount):
             # resets the update flags on all tiles before drawing them
