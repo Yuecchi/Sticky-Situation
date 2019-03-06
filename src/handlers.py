@@ -5,6 +5,7 @@ except ImportError:
 
 import game
 from vectors import Vector
+from entities import PlayerState
 
 class Keyboard:
 
@@ -20,16 +21,20 @@ class Keyboard:
         #TODO: PLAYER MOVEMENT IS CURRENTLY HACKED IN
 
         if key == simplegui.KEY_MAP['w']:
-            game.player.move(game.player.pos + Vector((0, -1)))
+            #game.player.change_state(PlayerState.IDLE_UP)
+            #game.player.move(game.player.pos + Vector((0, -1)))
             self.w = True
         if key == simplegui.KEY_MAP['a']:
-            game.player.move(game.player.pos + Vector((-1, 0)))
+            #game.player.change_state(PlayerState.IDLE_LEFT)
+            #game.player.move(game.player.pos + Vector((-1, 0)))
             self.a = True
         if key == simplegui.KEY_MAP['s']:
-            game.player.move(game.player.pos + Vector((0, 1)))
+            #game.player.change_state(PlayerState.IDLE_DOWN)
+            #game.player.move(game.player.pos + Vector((0, 1)))
             self.s = True
         if key == simplegui.KEY_MAP['d']:
-            game.player.move(game.player.pos + Vector((1, 0)))
+            #game.player.change_state(PlayerState.IDLE_RIGHT)
+            #game.player.move(game.player.pos + Vector((1, 0)))
             self.d = True
 
     def keyup(self, key):

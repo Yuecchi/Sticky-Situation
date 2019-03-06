@@ -6,10 +6,13 @@ except ImportError:
 from enum import IntEnum
 from vectors import Vector
 
+import handlers
+
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
 from entities   import Entity
 from entities   import Player
+from entities   import PlayerState
 from entities   import PushBlock
 from level      import Level
 
@@ -45,6 +48,7 @@ class Game:
     def draw(self, canvas):
 
         # update shit here (player pos, ai scripts, blah blah blah
+        player.update(handlers.keyboard)
 
         self.level.tilemap.draw(canvas)
         for entity in Entity.entities:
@@ -52,6 +56,8 @@ class Game:
 
         for i in range(len(entitymap)):
             canvas.draw_text(str(self.level.entitymap[i]), (400, 16 + (i * 16)), 16, "White")
+
+        canvas.draw_text(str(player.state), (0, 320), 16, "White")
 
         self.clock.tick()
 
@@ -63,6 +69,7 @@ _game = Game()
 testsheet = simplegui._load_local_image('../assets/testsheet.png')
 testsprite = simplegui._load_local_image('../assets/testsprite.png')
 testblock = simplegui._load_local_image('../assets/testblock.png')
+horse = simplegui._load_local_image('../assets/SS_Horse_1.1.png')
 
 index = (1, 1, 10, 1)
 types = (0, 0, 1 , 1)
@@ -91,7 +98,9 @@ entitymap = [
     ] for y in range(len(t_map))
 ]
 
-player = Player(Vector((1, 1)), testsprite)
+player = Player(Vector((1, 1)), horse)
+player.change_state(PlayerState.IDLE_RIGHT)
+
 block  = PushBlock(Vector((3, 6)), testblock)
 
 level = Level(tilemap, entitymap)
