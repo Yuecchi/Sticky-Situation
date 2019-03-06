@@ -76,8 +76,8 @@ class Tilesheet:
             else: animated = True
 
             # determine the last frame of the tiles animation
-            end_index[0] = start_index[0] + ((self.index[i] - 1) %  self.cols)
-            end_index[1] = start_index[1] + ((self.index[i] - 1) // self.cols)
+            end_index[0] = (start_index[0] + self.index[i] - 1) % self.cols
+            end_index[1] = start_index[1] + (start_index[0] + self.index[i] - 1) // self.cols
 
             # create tile and add it to the tile sheet
             self.tiles.append(Tile(self.img, start_index.copy(), end_index.copy(), animated))
