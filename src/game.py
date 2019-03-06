@@ -3,11 +3,61 @@ try:
 except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
 
+from enum import IntEnum
 from vectors import Vector
+
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
+from entities   import Entity
 from entities   import Player
 from entities   import PushBlock
+from level      import Level
+
+class Clock:
+
+    def __init__(self):
+        self.t = 0
+
+    def tick(self):
+        self.t += 1
+
+    def transition(self, rate):
+        return not(self.t % rate)
+
+class GameState(IntEnum):
+
+    TITLE = 1
+
+class Game:
+
+    def __init__(self):
+
+        self.state = GameState.TITLE
+        self.level = None
+        self.clock = Clock()
+
+    def change_state(self, state):
+        self.state = state
+
+    def change_level(self, level):
+        self.level = level
+
+    def draw(self, canvas):
+
+        # update shit here (player pos, ai scripts, blah blah blah
+
+        self.level.tilemap.draw(canvas)
+        for entity in Entity.entities:
+            entity.draw(canvas)
+
+        for i in range(len(entitymap)):
+            canvas.draw_text(str(self.level.entitymap[i]), (400, 16 + (i * 16)), 16, "White")
+
+        self.clock.tick()
+
+_game = Game()
+
+# TODO: EVERTYTHING BELOW HERE IS TEST DATA WHICH WILL BE LOADED VIA LEVEL FILES LATER
 
 # testing tilesheets
 testsheet = simplegui._load_local_image('../assets/testsheet.png')
@@ -35,16 +85,17 @@ t_map = [
 tilemap = Tilemap(tilesheet, t_map)
 
 # testing entities
-e_map = [
+entitymap = [
     [
         0 for x in range(len(t_map[0]))
     ] for y in range(len(t_map))
 ]
 
-player = Player(Vector((1, 1)), testsprite, e_map, tilemap)
-block  = PushBlock(Vector((3, 6)), testblock, e_map, tilemap)
+player = Player(Vector((1, 1)), testsprite)
+block  = PushBlock(Vector((3, 6)), testblock)
 
-
+level = Level(tilemap, entitymap)
+_game.change_level(level)
 
 
 

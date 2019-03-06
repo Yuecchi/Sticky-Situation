@@ -1,5 +1,5 @@
-from enum import Enum
-import gfx
+from enum import IntEnum
+import game
 
 FRAMEWIDTH, FRAMEHEIGHT = 640, 480
 
@@ -10,6 +10,11 @@ TILE_DIMS = (TILESIZE, TILESIZE)
 # tile type constants
 EMPTY = 0
 SOLID = 1
+
+class TileType(IntEnum):
+
+    EMPTY = 0
+    SOLID = 1
 
 class Tile:
 
@@ -39,7 +44,7 @@ class Tile:
         # checks if this tile animation has already been updated
         if not self.updated:
             if self.animated:
-                if gfx.clock.transition(self.animation_speed):
+                if game._game.clock.transition(self.animation_speed):
                     self.nextFrame()
                     # sets the updated flag to true so avoid extra updates
                     self.updated = True
