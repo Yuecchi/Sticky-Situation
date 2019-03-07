@@ -7,10 +7,6 @@ TILESIZE = 32
 HALFSIZE = 16
 TILE_DIMS = (TILESIZE, TILESIZE)
 
-# tile type constants
-EMPTY = 0
-SOLID = 1
-
 class TileType(IntEnum):
 
     EMPTY = 0

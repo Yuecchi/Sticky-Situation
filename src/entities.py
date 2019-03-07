@@ -11,7 +11,6 @@ import handlers
 from vectors import Vector
 from tileEngine import TileType
 
-
 TILESIZE = 32
 HALFSIZE = 16
 TILE_DIMS = (TILESIZE, TILESIZE)
@@ -65,6 +64,15 @@ class Entity:
         # add to list of entities
         Entity.entities.append(self)
 
+    def in_bounds(self, newpos):
+        if not newpos.x >= 0 or not newpos.x < len(game._game.level.tilemap.map[0]):
+            return False
+        elif not newpos.y >= 0 or not newpos.y < len(game._game.level.tilemap.map):
+            return False
+        else:
+            return True
+
+
     def draw(self, canvas):
         self.sprite.draw(canvas, self.pos)
 
@@ -83,6 +91,7 @@ class PlayerState(IntEnum):
 class Player(Entity):
 
     ENTITY_TYPE = 1
+    WALK_SPEED  = 1 / 32
 
     def __init__(self, pos, img):
 
@@ -92,6 +101,8 @@ class Player(Entity):
         self.state = PlayerState.IDLE_RIGHT
         self.moving = False
         self.destination = None
+        self.direction = None
+        self.speed = Player.WALK_SPEED
 
     def change_state(self, state):
 
@@ -114,19 +125,26 @@ class Player(Entity):
         def walk_up(self):
             self.state = PlayerState.WALK_UP
             self.sprite.set_animation(([0, 3], [3, 3]), 15)
+            self.direction = Vector((0, -1))
+            self.move(self.pos + self.direction)
 
         def walk_left(self):
             self.state = PlayerState.WALK_LEFT
             self.sprite.set_animation(([0, 4], [3, 4]), 15)
+            self.direction = Vector((-1, 0))
+            self.move(self.pos + self.direction)
 
         def walk_down(self):
             self.state = PlayerState.WALK_DOWN
             self.sprite.set_animation(([0, 5], [3, 5]), 15)
+            self.direction = Vector((0, 1))
+            self.move(self.pos + self.direction)
 
         def walk_right(self):
             self.state = PlayerState.WALK_RIGHT
             self.sprite.set_animation(([0, 6], [3, 6]), 15)
-            game.player.move(game.player.pos + Vector((1, 0)))
+            self.direction = Vector((1, 0))
+            self.move(self.pos + self.direction)
 
         states = {
             1 : idle_up,
@@ -145,14 +163,10 @@ class Player(Entity):
 
         # set can move to true, so it is assumed that the player will be able to move
         can_move = True
-
         # check if the move is within the boundaries of the map
-        if not newpos.x >= 0 or not newpos.x < len(game._game.level.tilemap.map[0]):
-            return
-        if not newpos.y >= 0 or not newpos.y < len(game._game.level.tilemap.map):
-            return
+        if not self.in_bounds(newpos): return
 
-        # check tile at self.pos?
+        #TODO: check tile at self.pos?
 
         # check tile at newpos
         tile_index = game.tilemap.map[newpos.y][newpos.x]
@@ -166,33 +180,57 @@ class Player(Entity):
         if bool(entity_id):
             entity = Entity.entities[entity_id - 1]
             if entity.ENTITY_TYPE == PushBlock.ENTITY_TYPE:
-                pushpos = newpos - self.pos
-                can_move = entity.move(entity.pos + pushpos)
-
+                entity.direction = newpos - self.pos
+                can_move = entity.move(entity.pos + entity.direction)
 
         # TODO: movement will likely require a more complex algorithm than this
         # if all checks are fine, move
         if can_move:
             self.moving = True
-            self.destination =  newpos.getP()
-            #game.entitymap[self.pos.y][self.pos.x] = 0
-            #game.entitymap[newpos.y][newpos.x] = self.id
-            #self.pos = newpos
-
-    def update(self, keyboard):
-
-        if not self.moving:
-            # check keyboard
-            if keyboard.w:
-                self.change_state(PlayerState.WALK_UP)
-            elif keyboard.a:
-                self.change_state(PlayerState.WALK_LEFT)
-            elif keyboard.s:
-                self.change_state(PlayerState.WALK_DOWN)
-            elif keyboard.d:
-                self.change_state(PlayerState.WALK_RIGHT)
+            self.destination =  newpos
         else:
-            pass
+            self.go_idle()
+
+    def go_idle(self):
+        # TODO: may need to account for states other than walk states
+        self.change_state(self.state - 4)
+
+    def update_entitymap_pos(self):
+        # move out of old location on entity map
+        oldpos = self.pos - self.direction
+        if game.entitymap[oldpos.y][oldpos.x] == Player.ENTITY_TYPE:
+            game.entitymap[oldpos.y][oldpos.x] = 0
+        # move into new location on entity map
+        game.entitymap[self.pos.y][self.pos.x] = self.id
+
+    def update(self):
+
+        # check if the player is already moving or not
+        if not self.moving:
+            # change player states based on keyboard input
+            if handlers.keyboard.w:
+                self.change_state(PlayerState.WALK_UP)
+            elif handlers.keyboard.a:
+                self.change_state(PlayerState.WALK_LEFT)
+            elif handlers.keyboard.s:
+                self.change_state(PlayerState.WALK_DOWN)
+            elif handlers.keyboard.d:
+                self.change_state(PlayerState.WALK_RIGHT)
+            else:
+                # if the player is not moving but in a walking state
+                # switch to an idle state which faces the same direction
+                if self.state >= 5 and self.state <= 8:
+                    self.go_idle()
+        else:
+            # keep moving towards the destination until is has been reached
+            if self.pos != self.destination:
+                self.pos += (self.direction * self.speed)
+            else:
+                self.moving = False
+                self.pos.to_int()
+                self.update_entitymap_pos()
+                self.destination = None
+                self.direction = None
 
 class PushBlock(Entity):
 
@@ -202,17 +240,20 @@ class PushBlock(Entity):
 
         Entity.__init__(self, pos, img)
 
+        # place new entity into the entity map
         game.entitymap[pos.y][pos.x] = self.id
+
+        self.moving = False
+        self.destination = None
+        self.direction = None
+        self.speed = Player.WALK_SPEED
 
     def move(self, newpos):
 
         can_move = True
 
         # check if the move is within the boundaries of the map
-        if not newpos.x >= 0 or not newpos.x < len(game._game.level.tilemap.map[0]):
-            return False
-        if not newpos.y >= 0 or not newpos.y < len(game._game.level.tilemap.map):
-            return False
+        if not self.in_bounds(newpos): return False
 
         # check tile at newpos
         tile_index = game.tilemap.map[newpos.y][newpos.x]
@@ -221,12 +262,23 @@ class PushBlock(Entity):
             can_move = False
         # if all checks are fine, move
         if can_move:
-            game.entitymap[self.pos.y][self.pos.x] = 0
-            game.entitymap[newpos.y][newpos.x] = self.id
-            self.pos = newpos
+            self.moving = True
+            self.destination = newpos
 
         return can_move
 
+    def update_entitymap_pos(self):
+        # move into new location on entity map
+        game.entitymap[self.pos.y][self.pos.x] = self.id
+
     def update(self):
-        pass
+        if self.moving:
+            if self.pos != self.destination:
+                self.pos = self.pos + (self.direction * self.speed)
+            else:
+                self.moving = False
+                self.pos.to_int()
+                self.update_entitymap_pos()
+                self.destination = None
+                self.direction = None
 

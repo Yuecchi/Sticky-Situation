@@ -48,7 +48,8 @@ class Game:
     def draw(self, canvas):
 
         # update shit here (player pos, ai scripts, blah blah blah
-        player.update(handlers.keyboard)
+        for entity in Entity.entities:
+            entity.update()
 
         self.level.tilemap.draw(canvas)
         for entity in Entity.entities:
@@ -58,6 +59,11 @@ class Game:
             canvas.draw_text(str(self.level.entitymap[i]), (400, 16 + (i * 16)), 16, "White")
 
         canvas.draw_text(str(player.state), (0, 320), 16, "White")
+        canvas.draw_text(str(player.moving), (0, 336), 16, "White")
+        canvas.draw_text(str(player.pos), (0, 352), 16, "White")
+
+        canvas.draw_text(str(block.moving), (0, 384), 16, "White")
+        canvas.draw_text(str(block.destination), (0, 400), 16, "White")
 
         self.clock.tick()
 

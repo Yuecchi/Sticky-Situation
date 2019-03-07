@@ -117,3 +117,8 @@ class Vector:
     # acos in the math library
     def angle(self, other):
         pass
+
+    # convert vector components to integers
+    def to_int(self):
+        self.x = int(self.x)
+        self.y = int(self.y)
