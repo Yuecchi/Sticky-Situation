@@ -9,6 +9,7 @@ class TileType(IntEnum):
 
     EMPTY = 0
     SOLID = 1
+    ICY   = 2
 
 class Tile:
 
@@ -105,4 +106,8 @@ class Tilemap:
             for x in range(len(self.map[0])):
                 self.tilesheet.tiles[self.map[y][x]].draw(canvas, HALFSIZE + ((x - scroll.x) * TILESIZE), HALFSIZE + ((y - scroll.y) * TILESIZE))
 
+# function for getting tiles
+def get_tile(pos):
+    tile_index = game._game.level.tilemap.map[pos.y][pos.x]
+    return game._game.level.tilemap.tilesheet.tiles[tile_index]
 
