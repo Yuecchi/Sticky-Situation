@@ -9,11 +9,12 @@ import game
 import handlers
 
 from vectors import Vector
+import tileEngine
 from tileEngine import TileType
 
-TILESIZE = 32
-HALFSIZE = 16
-TILE_DIMS = (TILESIZE, TILESIZE)
+TILESIZE = tileEngine.TILESIZE
+HALFSIZE = tileEngine.HALFSIZE
+TILE_DIMS = tileEngine.TILE_DIMS
 
 class Sprite:
 
@@ -34,7 +35,8 @@ class Sprite:
         self.animation_speed = speed
 
     def draw(self, canvas, map_pos):
-        pos = (HALFSIZE + (map_pos.x * TILESIZE), HALFSIZE + (map_pos.y * TILESIZE))
+        scroll =  game._game.camera.pos
+        pos = (HALFSIZE + ((map_pos.x - scroll.x) * TILESIZE), HALFSIZE + ((map_pos.y - scroll.y) * TILESIZE))
         src_pos = (HALFSIZE + (self.current_index[0] * TILESIZE), HALFSIZE + (self.current_index[1] * TILESIZE))
         canvas.draw_image(self.img, src_pos, TILE_DIMS, pos, TILE_DIMS)
 
@@ -164,7 +166,9 @@ class Player(Entity):
         # set can move to true, so it is assumed that the player will be able to move
         can_move = True
         # check if the move is within the boundaries of the map
-        if not self.in_bounds(newpos): return
+        if not self.in_bounds(newpos):
+            self.go_idle()
+            return
 
         #TODO: check tile at self.pos?
 

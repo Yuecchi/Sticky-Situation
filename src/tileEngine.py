@@ -1,8 +1,6 @@
 from enum import IntEnum
 import game
 
-FRAMEWIDTH, FRAMEHEIGHT = 640, 480
-
 TILESIZE = 32
 HALFSIZE = 16
 TILE_DIMS = (TILESIZE, TILESIZE)
@@ -89,12 +87,6 @@ class Tilesheet:
             start_index[0] = (start_index[0] + 1) % self.cols
             if start_index[0] == 0: start_index[1] += 1
 
-    def draw(self, canvas):
-        width, height = self.img.get_width(), self.img.get_height()
-        pos = (width, height)
-        center = (width / 2 , height / 2)
-        canvas.draw_image(self.img, center, pos, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2), pos)
-
 class Tilemap:
 
     def __init__(self, tilesheet, map):
@@ -105,11 +97,12 @@ class Tilemap:
     # and dras them to the screen based on their index position in the
     # tilemap
     def draw(self, canvas):
+        scroll =  game._game.camera.pos
         for i in range(self.tilesheet.tilecount):
             # resets the update flags on all tiles before drawing them
             self.tilesheet.tiles[i].updated = False
         for y in range(len(self.map)):
             for x in range(len(self.map[0])):
-                self.tilesheet.tiles[self.map[y][x]].draw(canvas, HALFSIZE + (x * TILESIZE), HALFSIZE + (y * TILESIZE))
+                self.tilesheet.tiles[self.map[y][x]].draw(canvas, HALFSIZE + ((x - scroll.x) * TILESIZE), HALFSIZE + ((y - scroll.y) * TILESIZE))
 
 
