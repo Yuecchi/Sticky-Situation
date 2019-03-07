@@ -1,5 +1,5 @@
-from enum import Enum
-import gfx
+from enum import IntEnum
+import game
 
 FRAMEWIDTH, FRAMEHEIGHT = 640, 480
 
@@ -7,17 +7,24 @@ TILESIZE = 32
 HALFSIZE = 16
 TILE_DIMS = (TILESIZE, TILESIZE)
 
-class Tiletype(Enum):
+# tile type constants
+EMPTY = 0
+SOLID = 1
+
+class TileType(IntEnum):
+
     EMPTY = 0
     SOLID = 1
 
 class Tile:
 
-    def __init__(self, img, start_index, end_index, animated):
+    def __init__(self, img, start_index, end_index, animated, type):
 
         # reference of the tilesheet from the containing tilesheet class
         self.img = img
         self.cols = self.img.get_width() // TILESIZE
+
+        self.type = type
 
         self.start_index = start_index
         self.end_index = end_index
@@ -37,7 +44,7 @@ class Tile:
         # checks if this tile animation has already been updated
         if not self.updated:
             if self.animated:
-                if gfx.clock.transition(self.animation_speed):
+                if game._game.clock.transition(self.animation_speed):
                     self.nextFrame()
                     # sets the updated flag to true so avoid extra updates
                     self.updated = True
@@ -51,7 +58,7 @@ class Tile:
 
 class Tilesheet:
 
-    def __init__(self, img, index):
+    def __init__(self, img, index, types):
 
         # source image for tile sheet
         self.img = img
@@ -61,6 +68,7 @@ class Tilesheet:
         self.cols = self.img.get_width() // TILESIZE
 
         self.index = index
+        self.types = types
         self.tilecount = len(self.index)
 
         # make the tiles
@@ -74,11 +82,11 @@ class Tilesheet:
             else: animated = True
 
             # determine the last frame of the tiles animation
-            end_index[0] = start_index[0] + ((self.index[i] - 1) %  self.cols)
-            end_index[1] = start_index[1] + ((self.index[i] - 1) // self.cols)
+            end_index[0] = (start_index[0] + self.index[i] - 1) % self.cols
+            end_index[1] = start_index[1] + (start_index[0] + self.index[i] - 1) // self.cols
 
             # create tile and add it to the tile sheet
-            self.tiles.append(Tile(self.img, start_index.copy(), end_index.copy(), animated))
+            self.tiles.append(Tile(self.img, start_index.copy(), end_index.copy(), animated, self.types[i]))
 
             # move to the next tile on the sheet
             start_index = end_index.copy()
