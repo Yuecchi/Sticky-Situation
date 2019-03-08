@@ -59,10 +59,13 @@ class Game:
         for entity in Entity.entities:
             entity.draw(canvas)
 
+        canvas.draw_text(str(player.direction), (0, 16), 16, "White")
+
+        """
         canvas.draw_text(str(player.pos), (0, 16), 16, "White")
         canvas.draw_text(str(self.camera.pos), (0, 32), 16, "White")
 
-        """
+
         for i in range(len(entitymap)):
             canvas.draw_text(str(self.level.entitymap[i]), (400, 16 + (i * 16)), 16, "White")
 
@@ -87,7 +90,7 @@ testblock = simplegui._load_local_image('../assets/testblock.png')
 horse = simplegui._load_local_image('../assets/SS_Horse_1.1.png')
 
 index = (1, 1, 10, 1)
-types = (0, 0, 0 , 1)
+types = (0, 2, 0 , 1)
 
 tilesheet = Tilesheet(testsheet, index, types)
 tilesheet.tiles[2].set_animation_speed(8)

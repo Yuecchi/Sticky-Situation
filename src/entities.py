@@ -74,10 +74,8 @@ class Entity:
         else:
             return True
 
-
     def draw(self, canvas):
         self.sprite.draw(canvas, self.pos)
-
 
 class PlayerState(IntEnum):
 
@@ -103,7 +101,7 @@ class Player(Entity):
         self.state = PlayerState.IDLE_RIGHT
         self.moving = False
         self.destination = None
-        self.direction = None
+        self.direction = Vector((1, 0))
         self.speed = Player.WALK_SPEED
 
     def change_state(self, state):
@@ -161,24 +159,63 @@ class Player(Entity):
 
         states[state](self)
 
+    def check_current_tile(self, current_tile):
+
+        def tile_empty(self):
+            pass
+
+        def tile_solid(self):
+            pass # wtf?
+
+        def tile_icy(self):
+            self.moving = True
+            self.go_idle()
+            self.move(self.pos + self.direction)
+
+        tile = {
+            TileType.EMPTY : tile_empty,
+            TileType.SOLID : tile_solid,
+            TileType.ICY   : tile_icy,
+        }
+
+        tile[current_tile.type](self)
+
+
+    def check_destination_tile(self, current_tile, destination_tile):
+
+        def tile_empty(self, current_tile, destination_tile):
+            return True
+
+        def tile_solid(self, current_tile, destination_tile):
+            return False
+
+        def tile_icy(self, current_tile, destination_tile):
+            return True
+
+        tile = {
+            TileType.EMPTY : tile_empty,
+            TileType.SOLID : tile_solid,
+            TileType.ICY   : tile_icy,
+        }
+
+        return tile[destination_tile.type](self, current_tile, destination_tile,)
+
     def move(self, newpos):
 
         # set can move to true, so it is assumed that the player will be able to move
         can_move = True
+        self.destination = newpos
         # check if the move is within the boundaries of the map
         if not self.in_bounds(newpos):
             self.go_idle()
             return
 
-        #TODO: check tile at self.pos?
+        # check destination tile
+        current_tile = tileEngine.get_tile(self.pos)
+        destination_tile = tileEngine.get_tile(self.destination)
+        can_move = self.check_destination_tile(current_tile, destination_tile)
 
-        # check tile at newpos
-        tile_index = game.tilemap.map[newpos.y][newpos.x]
-        tile = game.tilemap.tilesheet.tiles[tile_index]
-        if tile.type == TileType.SOLID:
-            can_move = False
-        # TODO: if ice, move in direction until not ice
-
+        # TODO: this logic will need to be put into its own method later
         # check entity at newpos
         entity_id = game.entitymap[newpos.y][newpos.x]
         if bool(entity_id):
@@ -191,13 +228,14 @@ class Player(Entity):
         # if all checks are fine, move
         if can_move:
             self.moving = True
-            self.destination =  newpos
         else:
             self.go_idle()
+            self.destination = None
 
     def go_idle(self):
         # TODO: may need to account for states other than walk states
-        self.change_state(self.state - 4)
+        if self.state >= 5 and self.state <= 8:
+            self.change_state(self.state - 4)
 
     def update_entitymap_pos(self):
         # move out of old location on entity map
@@ -208,6 +246,11 @@ class Player(Entity):
         game.entitymap[self.pos.y][self.pos.x] = self.id
 
     def update(self):
+
+        # check current location
+        if not self.moving:
+            current_tile = tileEngine.get_tile(self.pos)
+            self.check_current_tile(current_tile)
 
         # check if the player is already moving or not
         if not self.moving:
@@ -234,7 +277,6 @@ class Player(Entity):
                 self.pos.to_int()
                 self.update_entitymap_pos()
                 self.destination = None
-                self.direction = None
 
 class PushBlock(Entity):
 
