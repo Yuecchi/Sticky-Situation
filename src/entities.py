@@ -209,6 +209,7 @@ class Player(Entity):
             return True
 
         # TODO: I still need to account for entities blocking the destination
+        #  probably also need to account for over a fence into a fence (easy fix)
         def tile_left_fence(self, current_tile, destination_tile):
             # check if the player is moving from right to left
             if self.pos.x > self.destination.x:
@@ -379,3 +380,6 @@ class PushBlock(Entity):
                 self.destination = None
                 self.direction = None
 
+def get_entity(pos):
+    entity_id = game._game.level.entitymap[pos.y][pos.x]
+    return Entity.entities[entity_id]
