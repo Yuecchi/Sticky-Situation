@@ -66,10 +66,10 @@ class Entity:
         # add to list of entities
         Entity.entities.append(self)
 
-    def in_bounds(self, newpos):
-        if not newpos.x >= 0 or not newpos.x < len(game._game.level.tilemap.map[0]):
+    def in_bounds(self, pos):
+        if not pos.x >= 0 or not pos.x < len(game._game.level.tilemap.map[0]):
             return False
-        elif not newpos.y >= 0 or not newpos.y < len(game._game.level.tilemap.map):
+        elif not pos.y >= 0 or not pos.y < len(game._game.level.tilemap.map):
             return False
         else:
             return True
@@ -188,13 +188,13 @@ class Player(Entity):
             self.go_idle()
             self.move(self.pos + self.direction)
 
-        tile = {
+        tiles = {
             TileType.EMPTY : tile_empty,
             TileType.SOLID : tile_solid,
             TileType.ICY   : tile_icy,
         }
 
-        tile[current_tile.type](self)
+        tiles[current_tile.type](self)
 
 
     def check_destination_tile(self, current_tile, destination_tile):
@@ -242,7 +242,7 @@ class Player(Entity):
             else:
                 return False
 
-        tile = {
+        tiles = {
             TileType.EMPTY       : tile_empty,
             TileType.SOLID       : tile_solid,
             TileType.ICY         : tile_icy,
@@ -250,7 +250,19 @@ class Player(Entity):
             TileType.RIGHT_FENCE : tile_right_fence
         }
 
-        return tile[destination_tile.type](self, current_tile, destination_tile,)
+        return tiles[destination_tile.type](self, current_tile, destination_tile,)
+
+    def check_entity(self, entity):
+
+        def push_block(self, entity):
+            entity.direction = self.destination - self.pos
+            return entity.move(entity.pos + entity.direction)
+
+        entities = {
+            PushBlock.ENTITY_TYPE : push_block
+        }
+
+        return entities[entity.ENTITY_TYPE](self, entity)
 
     def move(self, newpos):
 
@@ -258,7 +270,7 @@ class Player(Entity):
         can_move = True
         self.destination = newpos
         # check if the move is within the boundaries of the map
-        if not self.in_bounds(newpos):
+        if not self.in_bounds(self.destination):
             self.go_idle()
             return
 
@@ -267,14 +279,10 @@ class Player(Entity):
         destination_tile = tileEngine.get_tile(self.destination)
         can_move = self.check_destination_tile(current_tile, destination_tile)
 
-        # TODO: this logic will need to be put into its own method later
-        # check entity at newpos
-        entity_id = game.entitymap[newpos.y][newpos.x]
-        if bool(entity_id):
-            entity = Entity.entities[entity_id - 1]
-            if entity.ENTITY_TYPE == PushBlock.ENTITY_TYPE:
-                entity.direction = newpos - self.pos
-                can_move = entity.move(entity.pos + entity.direction)
+        # check entity in destination tile
+        entity = get_entity(self.destination)
+        if entity:
+            can_move = self.check_entity(entity)
 
         # if all checks are fine, move
         if can_move:
@@ -382,4 +390,7 @@ class PushBlock(Entity):
 
 def get_entity(pos):
     entity_id = game._game.level.entitymap[pos.y][pos.x]
-    return Entity.entities[entity_id]
+    if bool(entity_id):
+        return Entity.entities[entity_id - 1]
+    else:
+        return False
