@@ -87,6 +87,10 @@ class PlayerState(IntEnum):
     WALK_LEFT   = 6
     WALK_DOWN   = 7
     WALK_RIGHT  = 8
+    # space for jump up
+    JUMP_LEFT   = 10
+    # space for jump down
+    JUMP_RIGHT  = 12
 
 class Player(Entity):
 
@@ -122,6 +126,8 @@ class Player(Entity):
             self.state = PlayerState.IDLE_RIGHT
             self.sprite.set_animation(([3, 2], [3, 2]), 1)
 
+
+        # TODO:  may need to change player move speed during state transition
         def walk_up(self):
             self.state = PlayerState.WALK_UP
             self.sprite.set_animation(([0, 3], [3, 3]), 15)
@@ -146,15 +152,25 @@ class Player(Entity):
             self.direction = Vector((1, 0))
             self.move(self.pos + self.direction)
 
+        def jump_left(self):
+            self.state = PlayerState.JUMP_LEFT
+            self.sprite.set_animation(([0, 11], [4, 11]), 15)
+
+        def jump_right(self):
+            self.state = PlayerState.JUMP_RIGHT
+            self.sprite.set_animation(([0, 12], [4, 12]), 15)
+
         states = {
-            1 : idle_up,
-            2 : idle_left,
-            3 : idle_down,
-            4 : idle_right,
-            5 : walk_up,
-            6 : walk_left,
-            7 : walk_down,
-            8 : walk_right
+            PlayerState.IDLE_UP    : idle_up,
+            PlayerState.IDLE_LEFT  : idle_left,
+            PlayerState.IDLE_DOWN  : idle_down,
+            PlayerState.IDLE_RIGHT : idle_right,
+            PlayerState.WALK_UP    : walk_up,
+            PlayerState.WALK_LEFT  : walk_left,
+            PlayerState.WALK_DOWN  : walk_down,
+            PlayerState.WALK_RIGHT : walk_right,
+            PlayerState.JUMP_LEFT  : jump_left,
+            PlayerState.JUMP_RIGHT : jump_right
         }
 
         states[state](self)
@@ -192,10 +208,45 @@ class Player(Entity):
         def tile_icy(self, current_tile, destination_tile):
             return True
 
+        # TODO: I still need to account for entities blocking the destination
+        def tile_left_fence(self, current_tile, destination_tile):
+            # check if the player is moving from right to left
+            if self.pos.x > self.destination.x:
+                # check if the destination location isn't blocked
+                jump_location = self.pos + Vector((-2, 0))
+                jump_destination = tileEngine.get_tile(jump_location)
+                if self.check_destination_tile(current_tile, jump_destination):
+                    # change player destination and state
+                    self.destination = jump_location
+                    self.change_state(PlayerState.JUMP_LEFT)
+                    return True
+                else:
+                    return False
+            else:
+                return False
+
+        def tile_right_fence(self, current_tile, destination_tile):
+            # check if the player is moving from right to left
+            if self.pos.x < self.destination.x:
+                # check if the destination location isn't blocked
+                jump_location = self.pos + Vector((2, 0))
+                jump_destination = tileEngine.get_tile(jump_location)
+                if self.check_destination_tile(current_tile, jump_destination):
+                    # change player destination and state
+                    self.destination = jump_location
+                    self.change_state(PlayerState.JUMP_RIGHT)
+                    return True
+                else:
+                    return False
+            else:
+                return False
+
         tile = {
-            TileType.EMPTY : tile_empty,
-            TileType.SOLID : tile_solid,
-            TileType.ICY   : tile_icy,
+            TileType.EMPTY       : tile_empty,
+            TileType.SOLID       : tile_solid,
+            TileType.ICY         : tile_icy,
+            TileType.LEFT_FENCE  : tile_left_fence,
+            TileType.RIGHT_FENCE : tile_right_fence
         }
 
         return tile[destination_tile.type](self, current_tile, destination_tile,)
@@ -224,7 +275,6 @@ class Player(Entity):
                 entity.direction = newpos - self.pos
                 can_move = entity.move(entity.pos + entity.direction)
 
-        # TODO: movement will likely require a more complex algorithm than this
         # if all checks are fine, move
         if can_move:
             self.moving = True
@@ -233,9 +283,11 @@ class Player(Entity):
             self.destination = None
 
     def go_idle(self):
-        # TODO: may need to account for states other than walk states
+        # TODO: may new to review this, but for now the model is sound
         if self.state >= 5 and self.state <= 8:
             self.change_state(self.state - 4)
+        if self.state >= 9 and self.state <= 12:
+            self.change_state(self.state - 8)
 
     def update_entitymap_pos(self):
         # move out of old location on entity map
@@ -264,10 +316,9 @@ class Player(Entity):
             elif handlers.keyboard.d:
                 self.change_state(PlayerState.WALK_RIGHT)
             else:
-                # if the player is not moving but in a walking state
-                # switch to an idle state which faces the same direction
-                if self.state >= 5 and self.state <= 8:
-                    self.go_idle()
+                # if the player is not moving switch to an idle state
+                # relative to the players current direction
+                self.go_idle()
         else:
             # keep moving towards the destination until is has been reached
             if self.pos != self.destination:

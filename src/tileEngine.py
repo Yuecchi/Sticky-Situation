@@ -7,9 +7,11 @@ TILE_DIMS = (TILESIZE, TILESIZE)
 
 class TileType(IntEnum):
 
-    EMPTY = 0
-    SOLID = 1
-    ICY   = 2
+    EMPTY       = 0 # any regular tile which can be stepped on
+    SOLID       = 1 # any regular tile which acts as a wall
+    ICY         = 2 # tiles which make the player slide
+    LEFT_FENCE  = 3 # tiles which can be jumped over from the right
+    RIGHT_FENCE = 4 # tile which can be jumped over from the left
 
 class Tile:
 

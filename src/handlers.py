@@ -14,8 +14,6 @@ class Keyboard:
 
     def keydown(self, key):
 
-        #TODO: PLAYER MOVEMENT IS CURRENTLY HACKED IN
-
         if key == simplegui.KEY_MAP['w']:
             self.w = True
         if key == simplegui.KEY_MAP['a']:
