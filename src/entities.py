@@ -202,6 +202,7 @@ class Player(Entity):
         def tile_icy(self):
             self.moving = True
             self.go_idle()
+            self.distance = 1
             self.move(self.pos + self.direction)
 
         def tile_left_fence(self):
@@ -214,24 +215,28 @@ class Player(Entity):
             self.moving = True
             self.change_state(PlayerState.IDLE_UP)
             self.direction = Vector((0, -1))
+            self.distance = 1
             self.move(self.pos + self.direction)
 
         def tile_conveyor_left(self):
             self.moving = True
             self.change_state(PlayerState.IDLE_LEFT)
             self.direction = Vector((-1, 0))
+            self.distance = 1
             self.move(self.pos + self.direction)
 
         def tile_conveyor_down(self):
             self.moving = True
             self.change_state(PlayerState.IDLE_DOWN)
             self.direction = Vector((0, 1))
+            self.distance = 1
             self.move(self.pos + self.direction)
 
         def tile_conveyor_right(self):
             self.moving = True
             self.change_state(PlayerState.IDLE_RIGHT)
             self.direction = Vector((1, 0))
+            self.distance = 1
             self.move(self.pos + self.direction)
 
         tiles = {
@@ -334,6 +339,10 @@ class Player(Entity):
         def button(self, entity):
             return False
 
+        def panel(self, entity):
+            entity.switch()
+            return True
+
         def loose_panel(self, entity):
             entity.switch()
             game._game.level.entitymap[entity.pos.y][entity.pos.x] = self.id
@@ -347,6 +356,7 @@ class Player(Entity):
             PushBlock.ENTITY_TYPE  : push_block,
             Lever.ENTITY_TYPE      : lever,
             Button.ENTITY_TYPE     : button,
+            Panel.ENTITY_TYPE      : panel,
             LoosePanel.ENTITY_TYPE : loose_panel,
             Door.ENTITY_TYPE       : door
         }
@@ -510,6 +520,10 @@ class PushBlock(Entity):
         def button(self, entity):
             return False
 
+        def panel(self, entity):
+            entity.switch()
+            return True
+
         def loose_panel(self, entity):
             entity.switch()
             game._game.level.entitymap[entity.pos.y][entity.pos.x] = self.id
@@ -522,6 +536,7 @@ class PushBlock(Entity):
             PushBlock.ENTITY_TYPE : push_block,
             Lever.ENTITY_TYPE     : lever,
             Button.ENTITY_TYPE    : button,
+            Panel.ENTITY_TYPE     : panel,
             LoosePanel.ENTITY_TYPE: loose_panel,
             Door.ENTITY_TYPE      : door
         }
@@ -569,7 +584,6 @@ class PushBlock(Entity):
                 self.update_entitymap_pos()
                 self.destination = None
                 self.direction = None
-
 
 class Trigger(Entity):
 
@@ -641,7 +655,7 @@ class Button(Trigger):
             if self.time == 0:
                 self.switch()
 
-class LoosePanel(Trigger):
+class Panel(Trigger):
 
     ENTITY_TYPE = 5
 
@@ -652,6 +666,43 @@ class LoosePanel(Trigger):
     def switch(self):
 
         if self.contact:
+
+            if self.contact.trigger():
+                self.on = not self.on
+
+                if self.on:
+                    unmap_entity(self)
+                    self.sprite.set_animation(([1, 0], [1, 0]), 1)
+                else:
+                    map_entity(self)
+                    self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
+    def trigger(self):
+
+        if not self.on:
+            return False
+        else:
+            # check for obstructions
+            entity = get_entity(self.pos)
+            if entity:
+                if entity.ENTITY_TYPE != self.ENTITY_TYPE:
+                    return False
+
+            self.switch()
+            return True
+
+class LoosePanel(Trigger):
+
+    ENTITY_TYPE = 6
+
+    def __init__(self, pos, img):
+
+        Trigger.__init__(self, pos, img)
+
+    def switch(self):
+
+        if self.contact:
+
             if self.contact.trigger():
 
                 self.on = not self.on
@@ -670,11 +721,9 @@ class LoosePanel(Trigger):
             if not get_entity(self.pos):
                 self.switch()
 
-
-
 class Door(Entity):
 
-    ENTITY_TYPE = 6
+    ENTITY_TYPE = 7
 
     def __init__(self, pos, img):
 

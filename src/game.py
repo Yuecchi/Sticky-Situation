@@ -14,6 +14,7 @@ from entities   import PlayerState
 from entities   import PushBlock
 from entities   import Lever
 from entities   import Button
+from entities   import Panel
 from entities   import LoosePanel
 from entities   import Door
 from level      import Level
@@ -100,6 +101,7 @@ testlever = simplegui._load_local_image('../assets/lever.png')
 testdoor = simplegui._load_local_image('../assets/door.png')
 testbutton = simplegui._load_local_image('../assets/button.png')
 
+test_panel = simplegui._load_local_image('../assets/panel.png')
 test_loose_panel = simplegui._load_local_image('../assets/loose_panel.png')
 
 index  = (1, 1, 10, 1, 1, 1, 1, 1, 1, 1, 1, 3 , 3 , 3 , 3 )
@@ -115,17 +117,17 @@ t_map = [
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 3, 3, 0, 3, 3, 3, 3, 3, 0, 3, 3, 3, 3, 3, 0, 3, 3, 3, 3, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3],
+    [3, 3, 3, 0, 3, 3, 3, 3, 3, 0, 3, 3, 3, 3, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3, 0, 3, 3, 3, 3, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 0, 0, 4, 5, 5, 5, 6, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 4, 5, 5, 5, 6, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 3, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 0, 0, 9, 5, 0, 5, 10, 0, 0, 0, 0, 0, 1, 0, 0, 2, 2, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 3, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 9, 5, 0, 5, 10, 0, 0, 0, 0, 0, 1, 0, 0, 2, 2, 2, 0, 0, 1, 0, 3, 3, 3, 0, 3, 3, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 13, 12, 12, 12, 12, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 13, 0, 0, 0, 0, 11, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3],
@@ -150,12 +152,13 @@ level = Level(tilemap, entitymap)
 _game.change_level(level)
 _game.camera.set_max_scroll(_game.level.tilemap)
 
-player = Player(Vector((21, 3)), horse)
+player = Player(Vector((26, 13)), horse)
 _game.camera.set_anchor(player)
 player.change_state(PlayerState.IDLE_DOWN)
 
 block1  = PushBlock(Vector((9, 3)), testblock)
 block2 = PushBlock(Vector((23, 2)), testblock)
+block3 = PushBlock(Vector((27, 12)), testblock)
 
 lever = Lever(Vector((5, 0)), testlever)
 lever_door = Door(Vector((3, 6)), testdoor)
@@ -166,14 +169,17 @@ button.set_timer(7)
 button_door = Door(Vector((15, 6)), testdoor)
 button.set_contact(button_door)
 
+panel = Panel(Vector((27, 13)), test_panel)
+panel_door = Door(Vector((26, 16)), testdoor)
+panel.set_contact(panel_door)
+panel_lever = Lever(Vector((26, 10)), testlever)
+panel_lever.set_contact(panel)
+
 loose_panel = LoosePanel(Vector((25, 3)), test_loose_panel)
-loose_panel_door = Door(Vector((21, 6)), testdoor)
+loose_panel_door = Door(Vector((24, 6)), testdoor)
 loose_panel.set_contact(loose_panel_door)
 
 # TODO:
 #  setting camera's max scroll in anchor will have to be part of
 #  level loading, there will need to be some way of always identifying
 #  the character entity in order to correctly anchor the camera
-
-
-

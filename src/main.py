@@ -13,4 +13,3 @@ frame.set_draw_handler(game._game.draw)
 frame.set_keydown_handler(handlers.keyboard.keydown)
 frame.set_keyup_handler(handlers.keyboard.keyup)
 frame.start()
-

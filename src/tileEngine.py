@@ -117,4 +117,3 @@ class Tilemap:
 def get_tile(pos):
     tile_index = game._game.level.tilemap.map[pos.y][pos.x]
     return game._game.level.tilemap.tilesheet.tiles[tile_index]
-
