@@ -4,15 +4,17 @@ except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
 
 from enum import IntEnum
-
-import handlers
 from vectors import Vector
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
+import entities
 from entities   import Entity
 from entities   import Player
 from entities   import PlayerState
 from entities   import PushBlock
+from entities   import Lever
+from entities   import Button
+from entities   import Door
 from level      import Level
 from camera     import Camera
 
@@ -56,11 +58,14 @@ class Game:
             self.camera.update()
 
         self.level.tilemap.draw(canvas)
-        for entity in Entity.entities:
+        for entity in Entity.entities[::-1]:
             entity.draw(canvas)
 
         canvas.draw_text("player position: " + str(player.pos), (0, 16), 16, "White")
         canvas.draw_text("player direction: " + str(player.direction), (0, 32), 16, "White")
+
+        canvas.draw_text(str(button.on), (0, 64), 16, "White")
+        canvas.draw_text(str(round(button.time / 60, 1)), (0, 80), 16, "White")
 
         """
         canvas.draw_text(str(player.pos), (0, 16), 16, "White")
@@ -86,9 +91,13 @@ _game = Game()
 
 # testing tilesheets
 testsheet = simplegui._load_local_image('../assets/testsheet.png')
+
 testsprite = simplegui._load_local_image('../assets/testsprite.png')
 testblock = simplegui._load_local_image('../assets/testblock.png')
 horse = simplegui._load_local_image('../assets/SS_Horse_1.1.png')
+testlever = simplegui._load_local_image('../assets/lever.png')
+testdoor = simplegui._load_local_image('../assets/door.png')
+testbutton = simplegui._load_local_image('../assets/button.png')
 
 index = (1, 1, 10, 1, 1, 1, 1, 1, 1, 1, 1)
 types = (0, 2, 0 , 1, 1, 1, 1, 3, 4, 1, 1)
@@ -98,12 +107,12 @@ tilesheet.tiles[2].set_animation_speed(8)
 
 t_map = [
     [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-    [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 3, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+    [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [3, 3, 3, 0, 3, 3, 3, 3, 3, 0, 3, 3, 3, 3, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
@@ -133,16 +142,24 @@ entitymap = [
     ] for y in range(len(t_map))
 ]
 
-player = Player(Vector((5, 14)), horse)
-_game.camera.set_anchor(player)
-player.change_state(PlayerState.IDLE_RIGHT)
-
-
-block  = PushBlock(Vector((3, 6)), testblock)
-
 level = Level(tilemap, entitymap)
 _game.change_level(level)
 _game.camera.set_max_scroll(_game.level.tilemap)
+
+player = Player(Vector((15, 3)), horse)
+_game.camera.set_anchor(player)
+player.change_state(PlayerState.IDLE_DOWN)
+
+block  = PushBlock(Vector((9, 3)), testblock)
+
+lever = Lever(Vector((5, 0)), testlever)
+level_door = Door(Vector((3, 6)), testdoor)
+lever.set_contact(level_door)
+
+button = Button(Vector((17, 0)), testbutton)
+button.set_timer(7)
+button_door = Door(Vector((15, 6)), testdoor)
+button.set_contact(button_door)
 
 # TODO:
 #  setting camera's max scroll in anchor will have to be part of

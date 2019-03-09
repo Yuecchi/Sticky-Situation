@@ -54,14 +54,18 @@ class Entity:
     entities = []
     next_id = 1
 
-    def __init__(self, pos, img):
+    def __init__(self, pos, img, isTrigger):
 
+        # assign unique id to new entity and place it in the entity map
         self.id = Entity.next_id
+        game._game.level.entitymap[pos.y][pos.x] = self.id
+
         Entity.next_id += 1
 
         self.pos = pos
         self.img = img
         self.sprite = Sprite(self.img)
+        self.isTrigger = isTrigger
 
         # add to list of entities
         Entity.entities.append(self)
@@ -73,6 +77,12 @@ class Entity:
             return False
         else:
             return True
+
+    def trigger(self):
+        pass
+
+    def update(self):
+        pass
 
     def draw(self, canvas):
         self.sprite.draw(canvas, self.pos)
@@ -99,8 +109,7 @@ class Player(Entity):
 
     def __init__(self, pos, img):
 
-        Entity.__init__(self, pos, img)
-        game.entitymap[pos.y][pos.x] = self.id
+        Entity.__init__(self, pos, img, False)
 
         self.state = PlayerState.IDLE_RIGHT
         self.moving = False
@@ -196,7 +205,6 @@ class Player(Entity):
 
         tiles[current_tile.type](self)
 
-
     def check_destination_tile(self, current_tile, destination_tile):
 
         def tile_empty(self, current_tile, destination_tile):
@@ -252,17 +260,47 @@ class Player(Entity):
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
 
-    def check_entity(self, entity):
+    def check_entity(self, entity): # player check entity method
 
         def push_block(self, entity):
             entity.direction = self.destination - self.pos
             return entity.move(entity.pos + entity.direction)
 
+        def lever(self, entity):
+            return False
+
+        def button(self, entity):
+            return False
+
+        def door(self, entity):
+            return entity.open
+
         entities = {
-            PushBlock.ENTITY_TYPE : push_block
+            PushBlock.ENTITY_TYPE : push_block,
+            Lever.ENTITY_TYPE     : lever,
+            Button.ENTITY_TYPE    : button,
+            Door.ENTITY_TYPE      : door
         }
 
         return entities[entity.ENTITY_TYPE](self, entity)
+
+    def check_trigger(self, entity):
+
+        if not entity.isTrigger:
+            return
+
+        def lever(self, entity):
+            entity.switch()
+
+        def button(self, entity):
+            entity.switch()
+
+        triggers = {
+            Lever.ENTITY_TYPE  : lever,
+            Button.ENTITY_TYPE : button
+        }
+
+        triggers[entity.ENTITY_TYPE](self, entity)
 
     def move(self, newpos):
 
@@ -315,6 +353,16 @@ class Player(Entity):
 
         # check if the player is already moving or not
         if not self.moving:
+
+            # action button
+            if handlers.keyboard.m:
+                trigger_location = self.pos + self.direction
+                entity = get_entity(trigger_location)
+                if entity:
+                    self.check_trigger(entity)
+
+                handlers.keyboard.m = False
+
             # change player states based on keyboard input
             if handlers.keyboard.w:
                 self.change_state(PlayerState.WALK_UP)
@@ -344,32 +392,90 @@ class PushBlock(Entity):
 
     def __init__(self, pos, img):
 
-        Entity.__init__(self, pos, img)
-
-        # place new entity into the entity map
-        game.entitymap[pos.y][pos.x] = self.id
+        Entity.__init__(self, pos, img, False)
 
         self.moving = False
         self.destination = None
         self.direction = None
         self.speed = Player.WALK_SPEED
 
+    def check_current_tile(self):
+        pass
+
+    def check_destination_tile(self, current_tile, destination_tile):
+
+        def tile_empty(self, current_tile, destination_tile):
+            return True
+
+        def tile_solid(self, current_tile, destination_tile):
+            return False
+
+        def tile_icy(self, current_tile, destination_tile):
+            return True
+
+        def tile_left_fence(self, current_tile, destination_tile):
+            return False
+
+        def tile_right_fence(self, current_tile, destination_tile):
+            return False
+
+        tiles = {
+            TileType.EMPTY       : tile_empty,
+            TileType.SOLID       : tile_solid,
+            TileType.ICY         : tile_icy,
+            TileType.LEFT_FENCE  : tile_left_fence,
+            TileType.RIGHT_FENCE : tile_right_fence
+        }
+
+        return tiles[destination_tile.type](self, current_tile, destination_tile,)
+
+    def check_entity(self, entity): # push block check entity method
+
+        def push_block(self, entity):
+            return False
+
+        def lever(self, entity):
+            return False
+
+        def button(self, entity):
+            return False
+
+        def door(self, entity):
+            return entity.open
+
+        entities = {
+            PushBlock.ENTITY_TYPE : push_block,
+            Lever.ENTITY_TYPE     : lever,
+            Button.ENTITY_TYPE    : button,
+            Door.ENTITY_TYPE      : door
+        }
+
+        return entities[entity.ENTITY_TYPE](self, entity)
+
     def move(self, newpos):
 
         can_move = True
+        self.destination = newpos
 
         # check if the move is within the boundaries of the map
-        if not self.in_bounds(newpos): return False
+        if not self.in_bounds(newpos):
+            return False
 
-        # check tile at newpos
-        tile_index = game.tilemap.map[newpos.y][newpos.x]
-        tile = game.tilemap.tilesheet.tiles[tile_index]
-        if tile.type == TileType.SOLID:
-            can_move = False
+        # check destination tile
+        current_tile = tileEngine.get_tile(self.pos)
+        destination_tile = tileEngine.get_tile(self.destination)
+        can_move = self.check_destination_tile(current_tile, destination_tile)
+
+        # check entity in destination tile
+        entity = get_entity(self.destination)
+        if entity:
+            can_move = self.check_entity(entity)
+
         # if all checks are fine, move
         if can_move:
             self.moving = True
-            self.destination = newpos
+        else:
+            self.destination = None
 
         return can_move
 
@@ -388,9 +494,116 @@ class PushBlock(Entity):
                 self.destination = None
                 self.direction = None
 
+class Lever(Entity):
+
+    ENTITY_TYPE = 3
+
+    def __init__(self, pos, img):
+
+        Entity.__init__(self, pos, img, True)
+
+        self.on = False
+        self.contact = None
+
+    def set_contact(self, contact):
+        self.contact = contact
+
+    def switch(self):
+        # check for an existing contact
+        if self.contact:
+            # attempt to trigger the contact
+            if self.contact.trigger():
+                # if the contact responds, flip the state
+                self.on = not self.on
+
+                if self.on:
+                    self.sprite.set_animation(([1, 0], [1, 0]), 1)
+                else:
+                    self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
+class Button(Entity):
+
+    ENTITY_TYPE = 4
+
+    def  __init__(self, pos, img):
+
+        Entity.__init__(self, pos, img, True)
+
+        self.on = False
+        self.contact = None
+
+        self.timer = 0
+        self.time  = 0
+
+    def set_contact(self, contact):
+        self.contact = contact
+
+    # set the number of second the timer will count down from
+    def set_timer(self, timer):
+        self.timer = timer * 60
+
+    def switch(self):
+
+        if self.contact:
+
+            if self.contact.trigger():
+                self.on = not self.on
+
+                if self.on:
+                    self.time = self.timer
+                    self.sprite.set_animation(([1, 0], [1, 0]), 1)
+                else:
+                    self.time = 0
+                    self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
+    def update(self):
+
+        # check timer
+        if self.on:
+            if self.time > 0:
+                self.time -= 1
+            if self.time == 0:
+                self.switch()
+
+
+class Door(Entity):
+
+    ENTITY_TYPE = 5
+
+    def __init__(self, pos, img):
+
+        Entity.__init__(self, pos, img, False)
+
+        self.open = False
+
+    def trigger(self):
+
+        #check for obstructions
+        entity = get_entity(self.pos)
+        if entity:
+            if entity.ENTITY_TYPE != self.ENTITY_TYPE:
+                return False
+
+        self.open = not self.open
+
+        if self.open:
+            unmap_entity(self)
+            self.sprite.set_animation(([1, 0], [1, 0]), 1)
+        else:
+            map_entity(self)
+            self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
+        return True
+
 def get_entity(pos):
     entity_id = game._game.level.entitymap[pos.y][pos.x]
     if bool(entity_id):
         return Entity.entities[entity_id - 1]
     else:
         return False
+
+def map_entity(entity):
+    game._game.level.entitymap[entity.pos.y][entity.pos.x] = entity.id
+
+def unmap_entity(entity):
+    game._game.level.entitymap[entity.pos.y][entity.pos.x] = 0
