@@ -116,6 +116,7 @@ class Player(Entity):
         self.destination = None
         self.direction = Vector((1, 0))
         self.speed = Player.WALK_SPEED
+        self.distance = None
 
     def change_state(self, state):
 
@@ -141,33 +142,39 @@ class Player(Entity):
             self.state = PlayerState.WALK_UP
             self.sprite.set_animation(([0, 3], [3, 3]), 15)
             self.direction = Vector((0, -1))
+            self.distance = 1
             self.move(self.pos + self.direction)
 
         def walk_left(self):
             self.state = PlayerState.WALK_LEFT
             self.sprite.set_animation(([0, 4], [3, 4]), 15)
             self.direction = Vector((-1, 0))
+            self.distance = 1
             self.move(self.pos + self.direction)
 
         def walk_down(self):
             self.state = PlayerState.WALK_DOWN
             self.sprite.set_animation(([0, 5], [3, 5]), 15)
             self.direction = Vector((0, 1))
+            self.distance = 1
             self.move(self.pos + self.direction)
 
         def walk_right(self):
             self.state = PlayerState.WALK_RIGHT
             self.sprite.set_animation(([0, 6], [3, 6]), 15)
             self.direction = Vector((1, 0))
+            self.distance = 1
             self.move(self.pos + self.direction)
 
         def jump_left(self):
             self.state = PlayerState.JUMP_LEFT
             self.sprite.set_animation(([0, 11], [4, 11]), 15)
+            self.distance = 2
 
         def jump_right(self):
             self.state = PlayerState.JUMP_RIGHT
             self.sprite.set_animation(([0, 12], [4, 12]), 15)
+            self.distance = 2
 
         states = {
             PlayerState.IDLE_UP    : idle_up,
@@ -197,10 +204,46 @@ class Player(Entity):
             self.go_idle()
             self.move(self.pos + self.direction)
 
+        def tile_left_fence(self):
+            pass
+
+        def tile_right_fence(self):
+            pass
+
+        def tile_conveyor_up(self):
+            self.moving = True
+            self.change_state(PlayerState.IDLE_UP)
+            self.direction = Vector((0, -1))
+            self.move(self.pos + self.direction)
+
+        def tile_conveyor_left(self):
+            self.moving = True
+            self.change_state(PlayerState.IDLE_LEFT)
+            self.direction = Vector((-1, 0))
+            self.move(self.pos + self.direction)
+
+        def tile_conveyor_down(self):
+            self.moving = True
+            self.change_state(PlayerState.IDLE_DOWN)
+            self.direction = Vector((0, 1))
+            self.move(self.pos + self.direction)
+
+        def tile_conveyor_right(self):
+            self.moving = True
+            self.change_state(PlayerState.IDLE_RIGHT)
+            self.direction = Vector((1, 0))
+            self.move(self.pos + self.direction)
+
         tiles = {
-            TileType.EMPTY : tile_empty,
-            TileType.SOLID : tile_solid,
-            TileType.ICY   : tile_icy,
+            TileType.EMPTY          : tile_empty,
+            TileType.SOLID          : tile_solid,
+            TileType.ICY            : tile_icy,
+            TileType.LEFT_FENCE     : tile_left_fence,
+            TileType.RIGHT_FENCE    : tile_right_fence,
+            TileType.CONVEYOR_UP    : tile_conveyor_up,
+            TileType.CONVEYOR_LEFT  : tile_conveyor_left,
+            TileType.CONVEYOR_DOWN  : tile_conveyor_down,
+            TileType.CONVEYOR_RIGHT : tile_conveyor_right
         }
 
         tiles[current_tile.type](self)
@@ -250,17 +293,36 @@ class Player(Entity):
             else:
                 return False
 
+        def tile_conveyor_up(self, current_tile, destination_tile):
+            return True
+
+        def tile_conveyor_left(self, current_tile, destination_tile):
+            return True
+
+        def tile_conveyor_down(self, current_tile, destination_tile):
+            return True
+
+        def tile_conveyor_right(self, current_tile, destination_tile):
+            return True
+
         tiles = {
             TileType.EMPTY       : tile_empty,
             TileType.SOLID       : tile_solid,
             TileType.ICY         : tile_icy,
             TileType.LEFT_FENCE  : tile_left_fence,
-            TileType.RIGHT_FENCE : tile_right_fence
+            TileType.RIGHT_FENCE : tile_right_fence,
+            TileType.CONVEYOR_UP    : tile_conveyor_up,
+            TileType.CONVEYOR_LEFT  : tile_conveyor_left,
+            TileType.CONVEYOR_DOWN  : tile_conveyor_down,
+            TileType.CONVEYOR_RIGHT : tile_conveyor_right
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
 
     def check_entity(self, entity): # player check entity method
+
+        def player(self, entity):
+            return True
 
         def push_block(self, entity):
             entity.direction = self.destination - self.pos
@@ -272,14 +334,21 @@ class Player(Entity):
         def button(self, entity):
             return False
 
+        def loose_panel(self, entity):
+            entity.switch()
+            game._game.level.entitymap[entity.pos.y][entity.pos.x] = self.id
+            return True
+
         def door(self, entity):
             return entity.open
 
         entities = {
-            PushBlock.ENTITY_TYPE : push_block,
-            Lever.ENTITY_TYPE     : lever,
-            Button.ENTITY_TYPE    : button,
-            Door.ENTITY_TYPE      : door
+            Player.ENTITY_TYPE     : player,
+            PushBlock.ENTITY_TYPE  : push_block,
+            Lever.ENTITY_TYPE      : lever,
+            Button.ENTITY_TYPE     : button,
+            LoosePanel.ENTITY_TYPE : loose_panel,
+            Door.ENTITY_TYPE       : door
         }
 
         return entities[entity.ENTITY_TYPE](self, entity)
@@ -338,9 +407,10 @@ class Player(Entity):
 
     def update_entitymap_pos(self):
         # move out of old location on entity map
-        oldpos = self.pos - self.direction
+        oldpos = self.pos - (self.direction * self.distance)
         if game.entitymap[oldpos.y][oldpos.x] == Player.ENTITY_TYPE:
             game.entitymap[oldpos.y][oldpos.x] = 0
+            self.distance = None
         # move into new location on entity map
         game.entitymap[self.pos.y][self.pos.x] = self.id
 
@@ -440,6 +510,11 @@ class PushBlock(Entity):
         def button(self, entity):
             return False
 
+        def loose_panel(self, entity):
+            entity.switch()
+            game._game.level.entitymap[entity.pos.y][entity.pos.x] = self.id
+            return True
+
         def door(self, entity):
             return entity.open
 
@@ -447,6 +522,7 @@ class PushBlock(Entity):
             PushBlock.ENTITY_TYPE : push_block,
             Lever.ENTITY_TYPE     : lever,
             Button.ENTITY_TYPE    : button,
+            LoosePanel.ENTITY_TYPE: loose_panel,
             Door.ENTITY_TYPE      : door
         }
 
@@ -494,12 +570,10 @@ class PushBlock(Entity):
                 self.destination = None
                 self.direction = None
 
-class Lever(Entity):
 
-    ENTITY_TYPE = 3
+class Trigger(Entity):
 
     def __init__(self, pos, img):
-
         Entity.__init__(self, pos, img, True)
 
         self.on = False
@@ -507,6 +581,14 @@ class Lever(Entity):
 
     def set_contact(self, contact):
         self.contact = contact
+
+class Lever(Trigger):
+
+    ENTITY_TYPE = 3
+
+    def __init__(self, pos, img):
+
+        Trigger.__init__(self, pos, img)
 
     def switch(self):
         # check for an existing contact
@@ -521,22 +603,16 @@ class Lever(Entity):
                 else:
                     self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
-class Button(Entity):
+class Button(Trigger):
 
     ENTITY_TYPE = 4
 
     def  __init__(self, pos, img):
 
-        Entity.__init__(self, pos, img, True)
-
-        self.on = False
-        self.contact = None
+        Trigger.__init__(self, pos, img)
 
         self.timer = 0
         self.time  = 0
-
-    def set_contact(self, contact):
-        self.contact = contact
 
     # set the number of second the timer will count down from
     def set_timer(self, timer):
@@ -565,10 +641,40 @@ class Button(Entity):
             if self.time == 0:
                 self.switch()
 
+class LoosePanel(Trigger):
+
+    ENTITY_TYPE = 5
+
+    def __init__(self, pos, img):
+
+        Trigger.__init__(self, pos, img)
+
+    def switch(self):
+
+        if self.contact:
+            if self.contact.trigger():
+
+                self.on = not self.on
+
+                if self.on:
+                    unmap_entity(self)
+                    self.sprite.set_animation(([1, 0], [1, 0]), 1)
+                else:
+                    map_entity(self)
+                    self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
+    def update(self):
+
+        if self.on:
+            # check if there is anything keeping it pressed down
+            if not get_entity(self.pos):
+                self.switch()
+
+
 
 class Door(Entity):
 
-    ENTITY_TYPE = 5
+    ENTITY_TYPE = 6
 
     def __init__(self, pos, img):
 

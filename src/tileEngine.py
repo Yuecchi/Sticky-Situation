@@ -7,15 +7,19 @@ TILE_DIMS = (TILESIZE, TILESIZE)
 
 class TileType(IntEnum):
 
-    EMPTY       = 0 # any regular tile which can be stepped on
-    SOLID       = 1 # any regular tile which acts as a wall
-    ICY         = 2 # tiles which make the player slide
-    LEFT_FENCE  = 3 # tiles which can be jumped over from the right
-    RIGHT_FENCE = 4 # tile which can be jumped over from the left
+    EMPTY          = 0 # any regular tile which can be stepped on
+    SOLID          = 1 # any regular tile which acts as a wall
+    ICY            = 2 # tiles which make the player slide
+    LEFT_FENCE     = 3 # tiles which can be jumped over from the right
+    RIGHT_FENCE    = 4 # tile which can be jumped over from the left
+    CONVEYOR_UP    = 5
+    CONVEYOR_LEFT  = 6
+    CONVEYOR_DOWN  = 7
+    CONVEYOR_RIGHT = 8
 
 class Tile:
 
-    def __init__(self, img, start_index, end_index, animated, type):
+    def __init__(self, img, start_index, end_index, animated, type, speed):
 
         # reference of the tilesheet from the containing tilesheet class
         self.img = img
@@ -28,7 +32,7 @@ class Tile:
         self.current_index = self.start_index.copy()
 
         self.animated = animated
-        self.animation_speed = 1
+        self.animation_speed = speed
         self.updated = False
 
     def set_animation_speed(self, speed):
@@ -55,7 +59,7 @@ class Tile:
 
 class Tilesheet:
 
-    def __init__(self, img, index, types):
+    def __init__(self, img, index, types, speeds):
 
         # source image for tile sheet
         self.img = img
@@ -66,6 +70,7 @@ class Tilesheet:
 
         self.index = index
         self.types = types
+        self.speeds = speeds
         self.tilecount = len(self.index)
 
         # make the tiles
@@ -83,7 +88,7 @@ class Tilesheet:
             end_index[1] = start_index[1] + (start_index[0] + self.index[i] - 1) // self.cols
 
             # create tile and add it to the tile sheet
-            self.tiles.append(Tile(self.img, start_index.copy(), end_index.copy(), animated, self.types[i]))
+            self.tiles.append(Tile(self.img, start_index.copy(), end_index.copy(), animated, self.types[i], self.speeds[i]))
 
             # move to the next tile on the sheet
             start_index = end_index.copy()
