@@ -1,3 +1,8 @@
+try:
+    import simplegui
+except ImportError:
+    import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
+
 from enum import IntEnum
 import game
 
@@ -66,10 +71,11 @@ class Tile:
 
 class Tilesheet:
 
-    def __init__(self, img, index, types, speeds):
+    def __init__(self, img_path, index, types, speeds):
 
         # source image for tile sheet
-        self.img = img
+        self.img_path = img_path
+        self.img = simplegui._load_local_image(self.img_path)
 
         # automatically assumes the number of tiles in the tilesheet
         # based on the sheets dimensions and the tilesize
@@ -102,6 +108,27 @@ class Tilesheet:
             start_index[0] = (start_index[0] + 1) % self.cols
             if start_index[0] == 0: start_index[1] += 1
 
+    def save(self, path):
+        file = open(path, "wt")
+
+        # write tilesheet path
+        buffer = self.img_path + "\n"
+        file.write(buffer)
+
+        # write index data
+        buffer = str(self.index).strip("[]").replace(" ", "") + "\n"
+        file.write(buffer)
+
+        # write types data
+        buffer = str(self.types).strip("[]").replace(" ", "") + "\n"
+        file.write(buffer)
+
+        # write speeds data
+        buffer = str(self.speeds).strip("[]").replace(" ", "") + "\n"
+        file.write(buffer)
+
+        file.close()
+
 class Tilemap:
 
     def __init__(self, tilesheet, map):
@@ -129,6 +156,35 @@ class Tilemap:
             for x in range(left, right):
                 self.tilesheet.tiles[self.map[y][x]].draw(canvas, HALFSIZE + ((x - scroll.x) * TILESIZE), HALFSIZE + ((y - scroll.y) * TILESIZE))
 
+    def save(self, path):
+        file = open(path, "wt")
+
+        # write tilesheet path
+        buffer = self.tilesheet.img_path + "\n"
+        file.write(buffer)
+
+        # write index data
+        buffer = str(self.tilesheet.index).strip("[]").replace(" ", "") + "\n"
+        file.write(buffer)
+
+        # write types data
+        buffer = str(self.tilesheet.types).strip("[]").replace(" ", "") + "\n"
+        file.write(buffer)
+
+        # write speeds data
+        buffer = str(self.tilesheet.speeds).strip("[]").replace(" ", "") + "\n"
+        file.write(buffer)
+
+        file.write("MAP_START\n")
+        for y in range(len(self.map)):
+            buffer = str(self.map[y]).strip("[]").replace(" ", "") + "\n"
+            file.write(buffer)
+        file.write("MAP_END\n")
+
+        file.close()
+
+#TILE ENGINE UTILITY FUNCTIONS
+
 # function for getting tiles
 def get_tile(pos):
     tile_index = game._game.level.tilemap.map[pos.y][pos.x]
@@ -140,3 +196,76 @@ def close_pit(pos):
 def change_tile(pos, tile):
     game._game.level.tilemap.map[pos.y][pos.x] = tile
 
+def list_csv(buffer):
+    data = []
+    val = ""
+    for c in buffer:
+        if c == ",":
+            data.append(int(val))
+            val = ""
+        else:
+            val += c
+    data.append(int(val))
+    return data
+
+def load_tilesheet(path):
+    # create an empty list to store the three indexes
+    index = []
+
+    # open the tilesheet file
+    file = open(path, "rt")
+
+    # read source image path
+    img_path = file.readline().strip("\n")
+
+    # read animation frame, types and animation speed index
+    # data and store them as individual lists
+    for i in range(3):
+        buffer = file.readline().strip("\n")
+        index.append(list_csv(buffer))
+
+    # close the tilesheet file
+    file.close()
+
+    # create and return the new tilesheet
+    tilesheet = Tilesheet(img_path, index[0], index[1], index[2])
+    return tilesheet
+
+def load_tilemap(path):
+
+    # create an empty list to store the three indexes
+    index = []
+
+    # open the tilesheet file
+    file = open(path, "rt")
+
+    # read source image path
+    img_path = file.readline().strip("\n")
+
+    # read animation frame, types and animation speed index
+    # data and store them as individual lists
+    for i in range(3):
+        buffer = file.readline().strip("\n")
+        index.append(list_csv(buffer))
+
+    # create new tilesheet
+    tilesheet = Tilesheet(img_path, index[0], index[1], index[2])
+
+    # create an empty list to store the map
+    map = []
+
+    for line in file:
+        if line.strip("\n") == "MAP_START":
+            continue
+        elif line.strip("\n") == "MAP_END":
+            break
+        else:
+            buffer = line.strip("\n")
+            map.append(list_csv(buffer))
+
+    # close the tilemap file
+    file.close()
+
+    # create a new tilemap and return it
+    tilemap = Tilemap(tilesheet, map)
+    return tilemap
