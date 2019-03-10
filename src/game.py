@@ -87,9 +87,6 @@ class Game:
         canvas.draw_text(str(block.destination), (0, 400), 16, "White")
         """
 
-        for i in range(len(entitymap)):
-            canvas.draw_text(str(self.level.entitymap[i]), (0, 16 + (i * 16)), 16, "White")
-
         self.clock.tick()
 
 _game = Game()
@@ -109,9 +106,9 @@ testbutton = simplegui._load_local_image('../assets/button.png')
 test_panel = simplegui._load_local_image('../assets/panel.png')
 test_loose_panel = simplegui._load_local_image('../assets/loose_panel.png')
 
-index  = (1, 1, 10, 1, 1, 1, 1, 1, 1, 1, 1, 3 , 3 , 3 , 3 , 5 )
-types  = (0, 2, 0 , 1, 1, 1, 1, 3, 4, 1, 1, 5 , 6 , 7 , 8 , 9 )
-speeds = (1, 1, 8 , 1, 1, 1, 1, 1, 1, 1, 1, 15, 15, 15, 15, 15)
+index  = (1, 1, 10, 1, 1, 1, 1, 1, 1, 1, 1, 3 , 3 , 3 , 3 , 5 , 1 , 1 )
+types  = (0, 2, 0 , 1, 1, 1, 1, 3, 4, 1, 1, 5 , 6 , 7 , 8 , 9 , 10, 11)
+speeds = (1, 1, 8 , 1, 1, 1, 1, 1, 1, 1, 1, 15, 15, 15, 15, 15, 1 , 1 )
 
 tilesheet = Tilesheet(testsheet, index, types, speeds)
 
@@ -144,7 +141,7 @@ t_map = [
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
@@ -162,7 +159,7 @@ entitymap = [
 ]
 
 level = Level(tilemap, entitymap)
-level.set_spawn(Vector((3, 3)))
+level.set_spawn(Vector((18, 28)))
 
 _game.change_level(level)
 _game.camera.set_max_scroll(_game.level.tilemap)
@@ -171,9 +168,10 @@ player = Player(Vector((18, 28)), horse)
 _game.camera.set_anchor(player)
 player.change_state(PlayerState.IDLE_DOWN)
 
-block1  = PushBlock(Vector((9, 3)), testblock)
+block1 = PushBlock(Vector((9, 3)), testblock)
 block2 = PushBlock(Vector((23, 2)), testblock)
 block3 = PushBlock(Vector((27, 12)), testblock)
+block4 = PushBlock(Vector((18, 26)), testblock)
 
 lever = Lever(Vector((5, 0)), testlever)
 lever_door = Door(Vector((3, 6)), testdoor)

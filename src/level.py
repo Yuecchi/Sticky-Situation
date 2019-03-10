@@ -5,7 +5,7 @@ except ImportError:
 
 from vectors import Vector
 from entities import Entity
-from copy import copy
+from tileEngine import TileType
 
 class Level:
 
@@ -26,6 +26,13 @@ class Level:
                 0 for x in range(len(self.entitymap[0]))
             ] for y in range(len(self.entitymap))
         ]
+
+        self.closed_pit = None
+        for i in range(len(self.tilemap.tilesheet.tiles)):
+            if self.tilemap.tilesheet.tiles[i].type == TileType.CLOSED_PIT:
+                self.closed_pit = i
+                break
+
 
     def set_spawn(self, pos):
         self.spawn = pos

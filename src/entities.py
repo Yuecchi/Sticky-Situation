@@ -70,7 +70,9 @@ class Entity:
         self.img = img
         self.sprite = Sprite(self.img)
         self.isTrigger = isTrigger
+
         self.dead = False
+        self.dont_draw = False
 
         # add to list of entities
         Entity.entities.append(self)
@@ -93,7 +95,8 @@ class Entity:
         pass
 
     def draw(self, canvas):
-        self.sprite.draw(canvas, self.pos)
+        if not self.dont_draw:
+            self.sprite.draw(canvas, self.pos)
 
 class PlayerState(IntEnum):
 
@@ -257,6 +260,12 @@ class Player(Entity):
         def tile_spikes(self):
             self.kill()
 
+        def tile_open_pit(self):
+            self.kill()
+
+        def tile_closed_pit(self):
+            return True
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -267,7 +276,9 @@ class Player(Entity):
             TileType.CONVEYOR_LEFT  : tile_conveyor_left,
             TileType.CONVEYOR_DOWN  : tile_conveyor_down,
             TileType.CONVEYOR_RIGHT : tile_conveyor_right,
-            TileType.SPIKES: tile_spikes
+            TileType.SPIKES         : tile_spikes,
+            TileType.OPEN_PIT       : tile_open_pit,
+            TileType.CLOSED_PIT     : tile_closed_pit
         }
 
         tiles[current_tile.type](self)
@@ -332,17 +343,25 @@ class Player(Entity):
         def tile_spikes(self, current_tile, destination_tile):
             return True
 
+        def tile_open_pit(self, current_tile, destination_tile):
+            return True
+
+        def tile_closed_pit(self, current_tile, destination_tile):
+            return True
+
         tiles = {
-            TileType.EMPTY       : tile_empty,
-            TileType.SOLID       : tile_solid,
-            TileType.ICY         : tile_icy,
-            TileType.LEFT_FENCE  : tile_left_fence,
-            TileType.RIGHT_FENCE : tile_right_fence,
+            TileType.EMPTY          : tile_empty,
+            TileType.SOLID          : tile_solid,
+            TileType.ICY            : tile_icy,
+            TileType.LEFT_FENCE     : tile_left_fence,
+            TileType.RIGHT_FENCE    : tile_right_fence,
             TileType.CONVEYOR_UP    : tile_conveyor_up,
             TileType.CONVEYOR_LEFT  : tile_conveyor_left,
             TileType.CONVEYOR_DOWN  : tile_conveyor_down,
             TileType.CONVEYOR_RIGHT : tile_conveyor_right,
-            TileType.SPIKES         : tile_spikes
+            TileType.SPIKES         : tile_spikes,
+            TileType.OPEN_PIT       : tile_open_pit,
+            TileType.CLOSED_PIT     : tile_closed_pit
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
@@ -541,6 +560,7 @@ class PushBlock(Entity):
     def reset(self):
         self.pos = self.spawn
         self.dead = False
+        self.dont_draw = False
 
         self.moving = False
         self.destination = None
@@ -548,8 +568,62 @@ class PushBlock(Entity):
         self.speed = Player.WALK_SPEED
 
 
-    def check_current_tile(self):
-        pass
+    def check_current_tile(self, current_tile):
+
+        def tile_empty(self):
+            pass
+
+        def tile_solid(self):
+            pass
+
+        def tile_icy(self):
+            pass
+
+        def tile_left_fence(self):
+            pass
+
+        def tile_right_fence(self):
+            pass
+
+        def tile_conveyor_up(self):
+            pass
+
+        def tile_conveyor_left(self):
+            pass
+
+        def tile_conveyor_down(self):
+            pass
+
+        def tile_conveyor_right(self):
+            pass
+
+        def tile_spikes(self):
+            pass
+
+        def tile_open_pit(self):
+            tileEngine.close_pit(self.pos)
+            unmap_entity(self)
+            self.dont_draw = True
+
+        def tile_closed_pit(self):
+            pass
+
+        tiles = {
+            TileType.EMPTY          : tile_empty,
+            TileType.SOLID          : tile_solid,
+            TileType.ICY            : tile_icy,
+            TileType.LEFT_FENCE     : tile_left_fence,
+            TileType.RIGHT_FENCE    : tile_right_fence,
+            TileType.CONVEYOR_UP    : tile_conveyor_up,
+            TileType.CONVEYOR_LEFT  : tile_conveyor_left,
+            TileType.CONVEYOR_DOWN  : tile_conveyor_down,
+            TileType.CONVEYOR_RIGHT : tile_conveyor_right,
+            TileType.SPIKES         : tile_spikes,
+            TileType.OPEN_PIT       : tile_open_pit,
+            TileType.CLOSED_PIT     : tile_closed_pit
+        }
+
+        tiles[current_tile.type](self)
 
     def check_destination_tile(self, current_tile, destination_tile):
 
@@ -568,12 +642,40 @@ class PushBlock(Entity):
         def tile_right_fence(self, current_tile, destination_tile):
             return False
 
+        def tile_conveyor_up(self, current_tile, destination_tile):
+            return True
+
+        def tile_conveyor_left(self, current_tile, destination_tile):
+            return True
+
+        def tile_conveyor_down(self, current_tile, destination_tile):
+            return True
+
+        def tile_conveyor_right(self, current_tile, destination_tile):
+            return True
+
+        def tile_spikes(self, current_tile, destination_tile):
+            return False
+
+        def tile_open_pit(self, current_tile, destination_tile):
+            return True
+
+        def tile_closed_pit(self, current_tile, destination_tile):
+            return True
+
         tiles = {
-            TileType.EMPTY       : tile_empty,
-            TileType.SOLID       : tile_solid,
-            TileType.ICY         : tile_icy,
-            TileType.LEFT_FENCE  : tile_left_fence,
-            TileType.RIGHT_FENCE : tile_right_fence
+            TileType.EMPTY          : tile_empty,
+            TileType.SOLID          : tile_solid,
+            TileType.ICY            : tile_icy,
+            TileType.LEFT_FENCE     : tile_left_fence,
+            TileType.RIGHT_FENCE    : tile_right_fence,
+            TileType.CONVEYOR_UP    : tile_conveyor_up,
+            TileType.CONVEYOR_LEFT  : tile_conveyor_left,
+            TileType.CONVEYOR_DOWN  : tile_conveyor_down,
+            TileType.CONVEYOR_RIGHT : tile_conveyor_right,
+            TileType.SPIKES         : tile_spikes,
+            TileType.OPEN_PIT       : tile_open_pit,
+            TileType.CLOSED_PIT     : tile_closed_pit
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
@@ -602,12 +704,12 @@ class PushBlock(Entity):
             return entity.open
 
         entities = {
-            PushBlock.ENTITY_TYPE : push_block,
-            Lever.ENTITY_TYPE     : lever,
-            Button.ENTITY_TYPE    : button,
-            Panel.ENTITY_TYPE     : panel,
-            LoosePanel.ENTITY_TYPE: loose_panel,
-            Door.ENTITY_TYPE      : door
+            PushBlock.ENTITY_TYPE  : push_block,
+            Lever.ENTITY_TYPE      : lever,
+            Button.ENTITY_TYPE     : button,
+            Panel.ENTITY_TYPE      : panel,
+            LoosePanel.ENTITY_TYPE : loose_panel,
+            Door.ENTITY_TYPE       : door
         }
 
         return entities[entity.ENTITY_TYPE](self, entity)
@@ -644,6 +746,12 @@ class PushBlock(Entity):
         game.entitymap[self.pos.y][self.pos.x] = self.id
 
     def update(self):
+
+        # check current location
+        if not self.moving:
+            current_tile = tileEngine.get_tile(self.pos)
+            self.check_current_tile(current_tile)
+
         if self.moving:
             if self.pos != self.destination:
                 self.pos = self.pos + (self.direction * self.speed)

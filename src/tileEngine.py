@@ -21,6 +21,8 @@ class TileType(IntEnum):
     CONVEYOR_DOWN  = 7
     CONVEYOR_RIGHT = 8
     SPIKES         = 9
+    OPEN_PIT       = 10
+    CLOSED_PIT     = 11
 
 class Tile:
 
@@ -131,3 +133,10 @@ class Tilemap:
 def get_tile(pos):
     tile_index = game._game.level.tilemap.map[pos.y][pos.x]
     return game._game.level.tilemap.tilesheet.tiles[tile_index]
+
+def close_pit(pos):
+    change_tile(pos, game._game.level.closed_pit)
+
+def change_tile(pos, tile):
+    game._game.level.tilemap.map[pos.y][pos.x] = tile
+
