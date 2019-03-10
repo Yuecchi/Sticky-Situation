@@ -5,6 +5,10 @@ TILESIZE = 32
 HALFSIZE = 16
 TILE_DIMS = (TILESIZE, TILESIZE)
 
+FRAMEWIDTH, FRAMEHEIGHT = 640, 480
+MAX_TILES_X = FRAMEWIDTH / TILESIZE
+MAX_TILES_Y = FRAMEHEIGHT / TILESIZE
+
 class TileType(IntEnum):
 
     EMPTY          = 0 # any regular tile which can be stepped on
@@ -16,6 +20,7 @@ class TileType(IntEnum):
     CONVEYOR_LEFT  = 6
     CONVEYOR_DOWN  = 7
     CONVEYOR_RIGHT = 8
+    SPIKES         = 9
 
 class Tile:
 
@@ -109,8 +114,17 @@ class Tilemap:
         for i in range(self.tilesheet.tilecount):
             # resets the update flags on all tiles before drawing them
             self.tilesheet.tiles[i].updated = False
-        for y in range(len(self.map)):
-            for x in range(len(self.map[0])):
+
+        # calculate visible region
+        left = int(game._game.camera.pos.x)
+        right = min(left + int(MAX_TILES_X) + 1, len(self.map[0]))
+
+        top = int(game._game.camera.pos.y)
+        bottom = min(top + int(MAX_TILES_Y) + 1, len(self.map))
+
+        # draw tiles
+        for y in range(top, bottom):
+            for x in range(left, right):
                 self.tilesheet.tiles[self.map[y][x]].draw(canvas, HALFSIZE + ((x - scroll.x) * TILESIZE), HALFSIZE + ((y - scroll.y) * TILESIZE))
 
 # function for getting tiles

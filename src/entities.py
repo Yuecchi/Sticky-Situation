@@ -25,6 +25,7 @@ class Sprite:
         self.animation = ([0, 0], [0, 0])
         self.animation_speed = 1
         self.current_index = self.animation[0].copy()
+        self.loop_animations = True
 
     def set_animation(self, animation, speed):
         self.animation = animation
@@ -44,7 +45,10 @@ class Sprite:
 
     def next_frame(self):
         if self.current_index == self.animation[1]:
-            self.current_index = self.animation[0].copy()
+            if self.loop_animations:
+                self.current_index = self.animation[0].copy()
+            else:
+                return
         else:
             self.current_index[0] = (self.current_index[0] + 1) % self.cols
             if self.current_index[0] == 0: self.current_index[1] += 1
@@ -61,11 +65,12 @@ class Entity:
         game._game.level.entitymap[pos.y][pos.x] = self.id
 
         Entity.next_id += 1
-
         self.pos = pos
+        self.spawn = pos
         self.img = img
         self.sprite = Sprite(self.img)
         self.isTrigger = isTrigger
+        self.dead = False
 
         # add to list of entities
         Entity.entities.append(self)
@@ -78,6 +83,9 @@ class Entity:
         else:
             return True
 
+    def reset(self):
+        pass
+
     def trigger(self):
         pass
 
@@ -89,34 +97,39 @@ class Entity:
 
 class PlayerState(IntEnum):
 
-    IDLE_UP     = 1
-    IDLE_LEFT   = 2
-    IDLE_DOWN   = 3
-    IDLE_RIGHT  = 4
-    WALK_UP     = 5
-    WALK_LEFT   = 6
-    WALK_DOWN   = 7
-    WALK_RIGHT  = 8
+    IDLE_UP     = 0
+    IDLE_LEFT   = 1
+    IDLE_DOWN   = 2
+    IDLE_RIGHT  = 3
+    WALK_UP     = 4
+    WALK_LEFT   = 5
+    WALK_DOWN   = 6
+    WALK_RIGHT  = 7
     # space for jump up
-    JUMP_LEFT   = 10
+    JUMP_LEFT   = 9
     # space for jump down
-    JUMP_RIGHT  = 12
+    JUMP_RIGHT  = 11
+    DEAD        = 12
 
 class Player(Entity):
 
     ENTITY_TYPE = 1
     WALK_SPEED  = 1 / 32
+    DEFAULT_STATE = PlayerState.IDLE_DOWN
 
     def __init__(self, pos, img):
 
         Entity.__init__(self, pos, img, False)
 
-        self.state = PlayerState.IDLE_RIGHT
+        self.state = Player.DEFAULT_STATE
         self.moving = False
         self.destination = None
         self.direction = Vector((1, 0))
         self.speed = Player.WALK_SPEED
         self.distance = None
+
+        self.respawn_timer = 3
+        self.respawn_time  = 0
 
     def change_state(self, state):
 
@@ -136,8 +149,6 @@ class Player(Entity):
             self.state = PlayerState.IDLE_RIGHT
             self.sprite.set_animation(([3, 2], [3, 2]), 1)
 
-
-        # TODO:  may need to change player move speed during state transition
         def walk_up(self):
             self.state = PlayerState.WALK_UP
             self.sprite.set_animation(([0, 3], [3, 3]), 15)
@@ -176,6 +187,9 @@ class Player(Entity):
             self.sprite.set_animation(([0, 12], [4, 12]), 15)
             self.distance = 2
 
+        def dead(self):
+            self.state = PlayerState.DEAD
+
         states = {
             PlayerState.IDLE_UP    : idle_up,
             PlayerState.IDLE_LEFT  : idle_left,
@@ -186,7 +200,8 @@ class Player(Entity):
             PlayerState.WALK_DOWN  : walk_down,
             PlayerState.WALK_RIGHT : walk_right,
             PlayerState.JUMP_LEFT  : jump_left,
-            PlayerState.JUMP_RIGHT : jump_right
+            PlayerState.JUMP_RIGHT : jump_right,
+            PlayerState.DEAD       : dead
         }
 
         states[state](self)
@@ -239,6 +254,9 @@ class Player(Entity):
             self.distance = 1
             self.move(self.pos + self.direction)
 
+        def tile_spikes(self):
+            self.kill()
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -248,7 +266,8 @@ class Player(Entity):
             TileType.CONVEYOR_UP    : tile_conveyor_up,
             TileType.CONVEYOR_LEFT  : tile_conveyor_left,
             TileType.CONVEYOR_DOWN  : tile_conveyor_down,
-            TileType.CONVEYOR_RIGHT : tile_conveyor_right
+            TileType.CONVEYOR_RIGHT : tile_conveyor_right,
+            TileType.SPIKES: tile_spikes
         }
 
         tiles[current_tile.type](self)
@@ -310,6 +329,9 @@ class Player(Entity):
         def tile_conveyor_right(self, current_tile, destination_tile):
             return True
 
+        def tile_spikes(self, current_tile, destination_tile):
+            return True
+
         tiles = {
             TileType.EMPTY       : tile_empty,
             TileType.SOLID       : tile_solid,
@@ -319,7 +341,8 @@ class Player(Entity):
             TileType.CONVEYOR_UP    : tile_conveyor_up,
             TileType.CONVEYOR_LEFT  : tile_conveyor_left,
             TileType.CONVEYOR_DOWN  : tile_conveyor_down,
-            TileType.CONVEYOR_RIGHT : tile_conveyor_right
+            TileType.CONVEYOR_RIGHT : tile_conveyor_right,
+            TileType.SPIKES         : tile_spikes
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
@@ -410,10 +433,8 @@ class Player(Entity):
 
     def go_idle(self):
         # TODO: may new to review this, but for now the model is sound
-        if self.state >= 5 and self.state <= 8:
-            self.change_state(self.state - 4)
-        if self.state >= 9 and self.state <= 12:
-            self.change_state(self.state - 8)
+        if not self.dead:
+            self.change_state(self.state % 4)
 
     def update_entitymap_pos(self):
         # move out of old location on entity map
@@ -424,6 +445,37 @@ class Player(Entity):
         # move into new location on entity map
         game.entitymap[self.pos.y][self.pos.x] = self.id
 
+    def kill(self):
+        if not self.dead:
+            # set dead flag to true
+            self.dead = True
+            # remove from entity map
+            unmap_entity(self)
+            # set animation looping to false
+            self.sprite.loop_animations = False
+            # play death animation (urgh)
+            last_state = self.state % 4
+            self.change_state(PlayerState.DEAD)
+
+            if last_state == PlayerState.IDLE_UP:
+                self.sprite.set_animation(([0, 7], [3, 7]), 10)
+            elif last_state == PlayerState.IDLE_LEFT:
+                self.sprite.set_animation(([0, 8], [3, 8]), 10)
+            elif last_state == PlayerState.IDLE_DOWN:
+                self.sprite.set_animation(([0, 9], [3, 9]), 10)
+            elif last_state == PlayerState.IDLE_RIGHT:
+                self.sprite.set_animation(([0, 10], [3, 10]), 10)
+
+            # set respawn time
+            self.respawn_time = self.respawn_timer * 60
+
+    def respawn(self):
+        self.dead = False
+        self.change_state(Player.DEFAULT_STATE)
+        game._game.level.reset_level()
+        self.pos = game._game.level.spawn
+        map_entity(self)
+
     def update(self):
 
         # check current location
@@ -431,40 +483,47 @@ class Player(Entity):
             current_tile = tileEngine.get_tile(self.pos)
             self.check_current_tile(current_tile)
 
-        # check if the player is already moving or not
-        if not self.moving:
+        if not self.dead:
+            # check if the player is already moving or not
+            if not self.moving:
 
-            # action button
-            if handlers.keyboard.m:
-                trigger_location = self.pos + self.direction
-                entity = get_entity(trigger_location)
-                if entity:
-                    self.check_trigger(entity)
+                # action button
+                if handlers.keyboard.m:
+                    trigger_location = self.pos + self.direction
+                    entity = get_entity(trigger_location)
+                    if entity:
+                        self.check_trigger(entity)
 
-                handlers.keyboard.m = False
+                    handlers.keyboard.m = False
 
-            # change player states based on keyboard input
-            if handlers.keyboard.w:
-                self.change_state(PlayerState.WALK_UP)
-            elif handlers.keyboard.a:
-                self.change_state(PlayerState.WALK_LEFT)
-            elif handlers.keyboard.s:
-                self.change_state(PlayerState.WALK_DOWN)
-            elif handlers.keyboard.d:
-                self.change_state(PlayerState.WALK_RIGHT)
+                # change player states based on keyboard input
+                if handlers.keyboard.w:
+                    self.change_state(PlayerState.WALK_UP)
+                elif handlers.keyboard.a:
+                    self.change_state(PlayerState.WALK_LEFT)
+                elif handlers.keyboard.s:
+                    self.change_state(PlayerState.WALK_DOWN)
+                elif handlers.keyboard.d:
+                    self.change_state(PlayerState.WALK_RIGHT)
+                else:
+                    # if the player is not moving switch to an idle state
+                    # relative to the players current direction
+                    self.go_idle()
             else:
-                # if the player is not moving switch to an idle state
-                # relative to the players current direction
-                self.go_idle()
+                # keep moving towards the destination until is has been reached
+                if self.pos != self.destination:
+                    self.pos += (self.direction * self.speed)
+                else:
+                    self.moving = False
+                    self.pos.to_int()
+                    self.update_entitymap_pos()
+                    self.destination = None
         else:
-            # keep moving towards the destination until is has been reached
-            if self.pos != self.destination:
-                self.pos += (self.direction * self.speed)
+
+            if self.respawn_time > 0:
+                self.respawn_time -= 1
             else:
-                self.moving = False
-                self.pos.to_int()
-                self.update_entitymap_pos()
-                self.destination = None
+                self.respawn()
 
 class PushBlock(Entity):
 
@@ -478,6 +537,16 @@ class PushBlock(Entity):
         self.destination = None
         self.direction = None
         self.speed = Player.WALK_SPEED
+
+    def reset(self):
+        self.pos = self.spawn
+        self.dead = False
+
+        self.moving = False
+        self.destination = None
+        self.direction = None
+        self.speed = Player.WALK_SPEED
+
 
     def check_current_tile(self):
         pass
@@ -604,6 +673,13 @@ class Lever(Trigger):
 
         Trigger.__init__(self, pos, img)
 
+    def reset(self):
+        self.pos = self.spawn
+        self.dead = False
+
+        self.on = False
+        self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
     def switch(self):
         # check for an existing contact
         if self.contact:
@@ -627,6 +703,15 @@ class Button(Trigger):
 
         self.timer = 0
         self.time  = 0
+
+    def reset(self):
+        self.pos = self.spawn
+        self.dead = False
+
+        self.on = False
+
+        self.time = 0
+        self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
     # set the number of second the timer will count down from
     def set_timer(self, timer):
@@ -662,6 +747,14 @@ class Panel(Trigger):
     def __init__(self, pos, img):
 
         Trigger.__init__(self, pos, img)
+
+    def reset(self):
+        self.pos = self.spawn
+        self.dead = False
+
+        self.on = False
+        self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
 
     def switch(self):
 
@@ -699,6 +792,13 @@ class LoosePanel(Trigger):
 
         Trigger.__init__(self, pos, img)
 
+    def reset(self):
+        self.pos = self.spawn
+        self.dead = False
+
+        self.on = False
+        self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
     def switch(self):
 
         if self.contact:
@@ -730,6 +830,13 @@ class Door(Entity):
         Entity.__init__(self, pos, img, False)
 
         self.open = False
+
+    def reset(self):
+        self.pos = self.spawn
+        self.dead = False
+
+        self.open = False
+        self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
     def trigger(self):
 
