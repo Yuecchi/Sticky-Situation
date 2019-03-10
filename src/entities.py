@@ -98,6 +98,10 @@ class Entity:
         if not self.dont_draw:
             self.sprite.draw(canvas, self.pos)
 
+    def save_data(self):
+        string = str(self.ENTITY_TYPE) + "," + str(self.spawn).strip("()")
+        return string
+
 class PlayerState(IntEnum):
 
     IDLE_UP     = 0
@@ -458,11 +462,11 @@ class Player(Entity):
     def update_entitymap_pos(self):
         # move out of old location on entity map
         oldpos = self.pos - (self.direction * self.distance)
-        if game.entitymap[oldpos.y][oldpos.x] == Player.ENTITY_TYPE:
-            game.entitymap[oldpos.y][oldpos.x] = 0
+        if game._game.level.entitymap[oldpos.y][oldpos.x] == Player.ENTITY_TYPE:
+            game._game.level.entitymap[oldpos.y][oldpos.x] = 0
             self.distance = None
         # move into new location on entity map
-        game.entitymap[self.pos.y][self.pos.x] = self.id
+        game._game.level.entitymap[self.pos.y][self.pos.x] = self.id
 
     def kill(self):
         if not self.dead:
@@ -492,7 +496,7 @@ class Player(Entity):
         self.dead = False
         self.change_state(Player.DEFAULT_STATE)
         game._game.level.reset_level()
-        self.pos = game._game.level.spawn
+        self.pos = self.spawn
         map_entity(self)
 
     def update(self):
@@ -566,7 +570,6 @@ class PushBlock(Entity):
         self.destination = None
         self.direction = None
         self.speed = Player.WALK_SPEED
-
 
     def check_current_tile(self, current_tile):
 
@@ -743,7 +746,7 @@ class PushBlock(Entity):
 
     def update_entitymap_pos(self):
         # move into new location on entity map
-        game.entitymap[self.pos.y][self.pos.x] = self.id
+        game._game.level.entitymap[self.pos.y][self.pos.x] = self.id
 
     def update(self):
 

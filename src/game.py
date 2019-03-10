@@ -50,6 +50,7 @@ class Game:
 
     def change_level(self, level):
         self.level = level
+        self.camera.set_max_scroll(self.level.tilemap)
 
     def draw(self, canvas):
 
@@ -78,8 +79,6 @@ class Game:
 _game = Game()
 
 # TODO: EVERTYTHING BELOW HERE IS TEST DATA WHICH WILL BE LOADED VIA LEVEL FILES LATER
-
-
 
 testsprite = simplegui._load_local_image('../assets/testsprite.png')
 testblock = simplegui._load_local_image('../assets/testblock.png')
@@ -140,25 +139,15 @@ tilemap.save('../assets/testmap.txt')
 """
 # tilesheet = tileEngine.load_tilesheet('../assets/testsheet.txt')
 
-tilemap = tileEngine.load_tilemap('../assets/testmap.txt')
-
-# testing entities
-entitymap = [
-    [
-        0 for x in range(len(tilemap.map[0]))
-    ] for y in range(len(tilemap.map))
-]
-
-level = Level(tilemap, entitymap)
-level.set_spawn(Vector((18, 28)))
-
+testmap = tileEngine.load_tilemap('../assets/testmap.txt')
+level = Level(testmap)
 _game.change_level(level)
-_game.camera.set_max_scroll(_game.level.tilemap)
+
 
 player = Player(Vector((18, 28)), horse)
 _game.camera.set_anchor(player)
-player.change_state(PlayerState.IDLE_DOWN)
 
+"""
 block1 = PushBlock(Vector((9, 3)), testblock)
 block2 = PushBlock(Vector((23, 2)), testblock)
 block3 = PushBlock(Vector((27, 12)), testblock)
@@ -182,9 +171,29 @@ panel_lever.set_contact(panel)
 loose_panel = LoosePanel(Vector((25, 3)), test_loose_panel)
 loose_panel_door = Door(Vector((24, 6)), testdoor)
 loose_panel.set_contact(loose_panel_door)
+"""
+
+file = open("../assets/entitylist.txt", "rt")
+for line in file:
+    buffer = line
+    data = tileEngine.list_csv(buffer)
+    if data[0] == Player.ENTITY_TYPE:
+        Player(Vector((data[1], data[2])), horse)
+    elif data[0] == PushBlock.ENTITY_TYPE:
+        PushBlock(Vector((data[1], data[2])), testblock)
+    elif data[0] == Lever.ENTITY_TYPE:
+        Lever(Vector((data[1], data[2])), testlever)
+    elif data[0] == Button.ENTITY_TYPE:
+        Button(Vector((data[1], data[2])), testbutton)
+    elif data[0] == Panel.ENTITY_TYPE:
+        Panel(Vector((data[1], data[2])), test_panel)
+    elif data[0] == LoosePanel.ENTITY_TYPE:
+        LoosePanel(Vector((data[1], data[2])), test_loose_panel)
+file.close()
+
+level.save("../assets/level.txt")
 
 _game.level.store_reset_maps()
-
 
 # TODO:
 #  setting camera's max scroll in anchor will have to be part of
