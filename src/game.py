@@ -18,6 +18,7 @@ from entities   import Button
 from entities   import Panel
 from entities   import LoosePanel
 from entities   import Door
+import level
 from level      import Level
 from camera     import Camera
 
@@ -65,11 +66,12 @@ class Game:
         for entity in Entity.entities[::-1]:
             entity.draw(canvas)
 
+        """
         canvas.draw_text("player position: " + str(player.pos), (0, 16), 16, "White")
         canvas.draw_text("player direction: " + str(player.direction), (0, 32), 16, "White")
         canvas.draw_text("player state: " + str(player.state), (0, 48), 16, "White")
 
-        """
+        
         for i in range(len(entitymap)):
             canvas.draw_text(str(self.level.entitymap[i]), (0, 16 + (i * 16)), 16, "White")
         """
@@ -80,6 +82,7 @@ _game = Game()
 
 # TODO: EVERTYTHING BELOW HERE IS TEST DATA WHICH WILL BE LOADED VIA LEVEL FILES LATER
 
+"""
 testsprite = simplegui._load_local_image('../assets/testsprite.png')
 testblock = simplegui._load_local_image('../assets/testblock.png')
 horse = simplegui._load_local_image('../assets/SS_Horse_1.1.png')
@@ -88,8 +91,8 @@ testdoor = simplegui._load_local_image('../assets/door.png')
 testbutton = simplegui._load_local_image('../assets/button.png')
 test_panel = simplegui._load_local_image('../assets/panel.png')
 test_loose_panel = simplegui._load_local_image('../assets/loose_panel.png')
+"""
 
-# testing tilesheets
 """
 testsheet_path = '../assets/testsheet.png'
 index  = [1, 1, 10, 1, 1, 1, 1, 1, 1, 1, 1, 3 , 3 , 3 , 3 , 5 , 1 , 1 ]
@@ -137,17 +140,15 @@ t_map = [
 tilemap = Tilemap(tilesheet, t_map)
 tilemap.save('../assets/testmap.txt')
 """
-# tilesheet = tileEngine.load_tilesheet('../assets/testsheet.txt')
 
+"""
+# tilesheet = tileEngine.load_tilesheet('../assets/testsheet.txt')
 testmap = tileEngine.load_tilemap('../assets/testmap.txt')
 level = Level(testmap)
 _game.change_level(level)
-
-
 player = Player(Vector((18, 28)), horse)
 _game.camera.set_anchor(player)
 
-"""
 block1 = PushBlock(Vector((9, 3)), testblock)
 block2 = PushBlock(Vector((23, 2)), testblock)
 block3 = PushBlock(Vector((27, 12)), testblock)
@@ -171,31 +172,10 @@ panel_lever.set_contact(panel)
 loose_panel = LoosePanel(Vector((25, 3)), test_loose_panel)
 loose_panel_door = Door(Vector((24, 6)), testdoor)
 loose_panel.set_contact(loose_panel_door)
-"""
-
-file = open("../assets/entitylist.txt", "rt")
-for line in file:
-    buffer = line
-    data = tileEngine.list_csv(buffer)
-    if data[0] == Player.ENTITY_TYPE:
-        Player(Vector((data[1], data[2])), horse)
-    elif data[0] == PushBlock.ENTITY_TYPE:
-        PushBlock(Vector((data[1], data[2])), testblock)
-    elif data[0] == Lever.ENTITY_TYPE:
-        Lever(Vector((data[1], data[2])), testlever)
-    elif data[0] == Button.ENTITY_TYPE:
-        Button(Vector((data[1], data[2])), testbutton)
-    elif data[0] == Panel.ENTITY_TYPE:
-        Panel(Vector((data[1], data[2])), test_panel)
-    elif data[0] == LoosePanel.ENTITY_TYPE:
-        LoosePanel(Vector((data[1], data[2])), test_loose_panel)
-file.close()
-
-level.save("../assets/level.txt")
 
 _game.level.store_reset_maps()
 
-# TODO:
-#  setting camera's max scroll in anchor will have to be part of
-#  level loading, there will need to be some way of always identifying
-#  the character entity in order to correctly anchor the camera
+# level.save("../assets/level.txt")
+"""
+
+level.load_level("../assets/level.txt")

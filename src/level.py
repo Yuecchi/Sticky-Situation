@@ -3,6 +3,7 @@ try:
 except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
 
+import game
 from vectors import Vector
 import entities
 from entities   import Entity
@@ -18,11 +19,21 @@ from tileEngine import TileType
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
 
+testsprite = simplegui._load_local_image('../assets/testsprite.png')
+testblock = simplegui._load_local_image('../assets/testblock.png')
+horse = simplegui._load_local_image('../assets/SS_Horse_1.1.png')
+testlever = simplegui._load_local_image('../assets/lever.png')
+testdoor = simplegui._load_local_image('../assets/door.png')
+testbutton = simplegui._load_local_image('../assets/button.png')
+test_panel = simplegui._load_local_image('../assets/panel.png')
+test_loose_panel = simplegui._load_local_image('../assets/loose_panel.png')
+
 class Level:
 
     def __init__(self, tilemap):
 
         self.tilemap = tilemap
+
         self.entitymap = [
             [
                 0 for x in range(len(tilemap.map[0]))
@@ -86,17 +97,27 @@ class Level:
         buffer = str(self.tilemap.tilesheet.speeds).strip("[]").replace(" ", "") + "\n"
         file.write(buffer)
 
+        # save tilemap
         file.write("MAP_START\n")
         for y in range(len(self.tilemap.map)):
             buffer = str(self.tilemap.map[y]).strip("[]").replace(" ", "") + "\n"
             file.write(buffer)
         file.write("MAP_END\n")
 
+        # save entities
         file.write("ENTITIES_START\n")
         for entity in Entity.entities:
             buffer = entity.save_data() + "\n"
             file.write(buffer)
         file.write("ENTITIES_END\n")
+
+        # save contacts
+        file.write("CONTACTS_START\n")
+        for entity in Entity.entities:
+            buffer = entity.contact_data()
+            if buffer:
+                file.write(buffer + "\n")
+        file.write("CONTACTS_END\n")
 
         file.close()
 
@@ -144,11 +165,58 @@ def load_level(path):
             buffer = line.strip("\n")
             map.append(list_csv(buffer))
 
-    # close the tilemap file
-    file.close()
-
     # create a new tilemap
     tilemap = Tilemap(tilesheet, map)
 
-    # return level
-    return Level(Tilemap)
+    # create level and load it as the games current level
+    level = Level(tilemap)
+    game._game.change_level(level)
+
+    # load entities
+    Entity.entities = []
+
+    # retrieve entity data and create entities
+    for line in file:
+        buffer = line.strip("\n")
+        if buffer == "ENTITIES_START":
+            continue
+        elif buffer == "ENTITIES_END":
+            break
+
+        data = list_csv(buffer)
+        if data[0] == Player.ENTITY_TYPE:
+            Player(Vector((data[1], data[2])), horse)
+        elif data[0] == PushBlock.ENTITY_TYPE:
+            PushBlock(Vector((data[1], data[2])), testblock)
+        elif data[0] == Lever.ENTITY_TYPE:
+            Lever(Vector((data[1], data[2])), testlever)
+        elif data[0] == Button.ENTITY_TYPE:
+            Button(Vector((data[1], data[2])), testbutton)
+        elif data[0] == Panel.ENTITY_TYPE:
+            Panel(Vector((data[1], data[2])), test_panel)
+        elif data[0] == LoosePanel.ENTITY_TYPE:
+            LoosePanel(Vector((data[1], data[2])), test_loose_panel)
+        elif data[0] == Door.ENTITY_TYPE:
+            Door(Vector((data[1], data[2])), testdoor)
+
+
+    # retrieve contact data and set contacts
+    for line in file:
+        buffer = line.strip("\n")
+        if buffer == "CONTACTS_START":
+            continue
+        elif buffer == "CONTACTS_END":
+            break
+
+        data = list_csv(buffer)
+        Entity.entities[data[0] - 1].set_contact(Entity.entities[data[1] - 1])
+        if len(data) == 3:
+            Entity.entities[data[0] - 1].set_timer(data[2])
+
+    # aset player as camera anchor and store default map state
+    game._game.camera.set_anchor(Entity.entities[0])
+    game._game.level.store_reset_maps()
+
+    # close the level file
+    file.close()
+

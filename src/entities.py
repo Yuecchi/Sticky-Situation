@@ -102,6 +102,18 @@ class Entity:
         string = str(self.ENTITY_TYPE) + "," + str(self.spawn).strip("()")
         return string
 
+    def contact_data(self):
+        if self.isTrigger:
+            if self.contact:
+                if self.ENTITY_TYPE == Button.ENTITY_TYPE:
+                    string = str(self.id) + "," + str(self.contact.id) + "," + str(self.timer // 60)
+                else:
+                    string = str(self.id) + "," + str(self.contact.id)
+                return string
+
+    def display(self):
+        return str(self.ENTITY_TYPE)
+
 class PlayerState(IntEnum):
 
     IDLE_UP     = 0
