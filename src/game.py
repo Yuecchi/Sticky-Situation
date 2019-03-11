@@ -70,11 +70,14 @@ class Game:
         canvas.draw_text("player position: " + str(player.pos), (0, 16), 16, "White")
         canvas.draw_text("player direction: " + str(player.direction), (0, 32), 16, "White")
         canvas.draw_text("player state: " + str(player.state), (0, 48), 16, "White")
-
         
-        for i in range(len(entitymap)):
+        
+        for i in range(len(self.level.entitymap)):
             canvas.draw_text(str(self.level.entitymap[i]), (0, 16 + (i * 16)), 16, "White")
         """
+
+        canvas.draw_text(str(block4.direction), (0, 16), 16, "White")
+        canvas.draw_text(str(block4.destination), (0, 32), 16, "White")
 
         self.clock.tick()
 
@@ -82,7 +85,7 @@ _game = Game()
 
 # TODO: EVERTYTHING BELOW HERE IS TEST DATA WHICH WILL BE LOADED VIA LEVEL FILES LATER
 
-"""
+
 testsprite = simplegui._load_local_image('../assets/testsprite.png')
 testblock = simplegui._load_local_image('../assets/testblock.png')
 horse = simplegui._load_local_image('../assets/SS_Horse_1.1.png')
@@ -91,7 +94,7 @@ testdoor = simplegui._load_local_image('../assets/door.png')
 testbutton = simplegui._load_local_image('../assets/button.png')
 test_panel = simplegui._load_local_image('../assets/panel.png')
 test_loose_panel = simplegui._load_local_image('../assets/loose_panel.png')
-"""
+
 
 """
 testsheet_path = '../assets/testsheet.png'
@@ -141,18 +144,19 @@ tilemap = Tilemap(tilesheet, t_map)
 tilemap.save('../assets/testmap.txt')
 """
 
-"""
+
 # tilesheet = tileEngine.load_tilesheet('../assets/testsheet.txt')
 testmap = tileEngine.load_tilemap('../assets/testmap.txt')
 level = Level(testmap)
 _game.change_level(level)
-player = Player(Vector((18, 28)), horse)
+player = Player(Vector((5, 25)), horse)
 _game.camera.set_anchor(player)
 
 block1 = PushBlock(Vector((9, 3)), testblock)
 block2 = PushBlock(Vector((23, 2)), testblock)
 block3 = PushBlock(Vector((27, 12)), testblock)
 block4 = PushBlock(Vector((18, 26)), testblock)
+block4 = PushBlock(Vector((5, 24)), testblock)
 
 lever = Lever(Vector((5, 0)), testlever)
 lever_door = Door(Vector((3, 6)), testdoor)
@@ -176,6 +180,6 @@ loose_panel.set_contact(loose_panel_door)
 _game.level.store_reset_maps()
 
 # level.save("../assets/level.txt")
-"""
 
-level.load_level("../assets/level.txt")
+
+# level.load_level("../assets/level.txt")

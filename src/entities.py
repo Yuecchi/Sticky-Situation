@@ -388,8 +388,11 @@ class Player(Entity):
             return True
 
         def push_block(self, entity):
-            entity.direction = self.destination - self.pos
-            return entity.move(entity.pos + entity.direction)
+            if entity.moving:
+                return False
+            else:
+                entity.direction = self.direction
+                return entity.move(entity.pos + entity.direction)
 
         def lever(self, entity):
             return False
@@ -399,7 +402,6 @@ class Player(Entity):
 
         def panel(self, entity):
             entity.switch()
-            return True
 
         def loose_panel(self, entity):
             entity.switch()
@@ -439,7 +441,7 @@ class Player(Entity):
 
         triggers[entity.ENTITY_TYPE](self, entity)
 
-    def move(self, newpos):
+    def move(self, newpos): # player move method
 
         # set can move to true, so it is assumed that the player will be able to move
         can_move = True
@@ -474,7 +476,7 @@ class Player(Entity):
     def update_entitymap_pos(self):
         # move out of old location on entity map
         oldpos = self.pos - (self.direction * self.distance)
-        if game._game.level.entitymap[oldpos.y][oldpos.x] == Player.ENTITY_TYPE:
+        if game._game.level.entitymap[oldpos.y][oldpos.x] == self.id:
             game._game.level.entitymap[oldpos.y][oldpos.x] = 0
             self.distance = None
         # move into new location on entity map
@@ -511,7 +513,7 @@ class Player(Entity):
         self.pos = self.spawn
         map_entity(self)
 
-    def update(self):
+    def update(self): # player update method
 
         # check current location
         if not self.moving:
@@ -592,7 +594,8 @@ class PushBlock(Entity):
             pass
 
         def tile_icy(self):
-            pass
+            self.moving = True
+            self.move(self.pos + self.direction)
 
         def tile_left_fence(self):
             pass
@@ -601,16 +604,24 @@ class PushBlock(Entity):
             pass
 
         def tile_conveyor_up(self):
-            pass
+            self.moving = True
+            self.direction = Vector((0, -1))
+            self.move(self.pos + self.direction)
 
         def tile_conveyor_left(self):
-            pass
+            self.moving = True
+            self.direction = Vector((-1, 0))
+            self.move(self.pos + self.direction)
 
         def tile_conveyor_down(self):
-            pass
+            self.moving = True
+            self.direction = Vector((0, 1))
+            self.move(self.pos + self.direction)
 
         def tile_conveyor_right(self):
-            pass
+            self.moving = True
+            self.direction = Vector((1, 0))
+            self.move(self.pos + self.direction)
 
         def tile_spikes(self):
             pass
@@ -697,6 +708,9 @@ class PushBlock(Entity):
 
     def check_entity(self, entity): # push block check entity method
 
+        def player(self, entity):
+            return False
+
         def push_block(self, entity):
             return False
 
@@ -719,6 +733,7 @@ class PushBlock(Entity):
             return entity.open
 
         entities = {
+            Player.ENTITY_TYPE     : player,
             PushBlock.ENTITY_TYPE  : push_block,
             Lever.ENTITY_TYPE      : lever,
             Button.ENTITY_TYPE     : button,
@@ -729,7 +744,7 @@ class PushBlock(Entity):
 
         return entities[entity.ENTITY_TYPE](self, entity)
 
-    def move(self, newpos):
+    def move(self, newpos): # push block move method
 
         can_move = True
         self.destination = newpos
@@ -752,15 +767,19 @@ class PushBlock(Entity):
         if can_move:
             self.moving = True
         else:
-            self.destination = None
+            self.destination = Vector((0, 0))
 
         return can_move
 
     def update_entitymap_pos(self):
+        # move out of old location on entity map
+        oldpos = self.pos - self.direction
+        if game._game.level.entitymap[oldpos.y][oldpos.x] == self.id:
+            game._game.level.entitymap[oldpos.y][oldpos.x] = 0
         # move into new location on entity map
         game._game.level.entitymap[self.pos.y][self.pos.x] = self.id
 
-    def update(self):
+    def update(self): # push block update method
 
         # check current location
         if not self.moving:
@@ -774,8 +793,7 @@ class PushBlock(Entity):
                 self.moving = False
                 self.pos.to_int()
                 self.update_entitymap_pos()
-                self.destination = None
-                self.direction = None
+                self.destination = Vector((0, 0))
 
 class Trigger(Entity):
 

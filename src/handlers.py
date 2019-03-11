@@ -40,6 +40,3 @@ class Keyboard:
             self.m = False
 
 keyboard = Keyboard()
-
-
-

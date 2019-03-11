@@ -219,4 +219,3 @@ def load_level(path):
 
     # close the level file
     file.close()
-
