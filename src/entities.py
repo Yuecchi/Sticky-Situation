@@ -56,9 +56,12 @@ class Sprite:
 class Entity:
 
     entities = []
+    next_id = 1
+
     entity_updates = []
     entity_drawing = []
-    next_id = 1
+    entity_moveable = []
+
 
     def __init__(self, pos, img, isTrigger):
 
@@ -141,6 +144,8 @@ class Player(Entity):
     def __init__(self, pos, img):
 
         Entity.__init__(self, pos, img, False)
+
+        Entity.entity_moveable.append(self)
 
         self.state = Player.DEFAULT_STATE
         self.moving = False
@@ -580,6 +585,8 @@ class PushBlock(Entity):
 
         Entity.__init__(self, pos, img, False)
 
+        Entity.entity_moveable.append(self)
+
         self.moving = False
         self.destination = self.pos
         self.direction = None
@@ -799,6 +806,13 @@ class PushBlock(Entity):
         if self.moving:
             # TODO: detect if a space has become occupied
             #  while you are moving into it
+            for entity in Entity.entity_moveable:
+                if entity == self: continue
+                if entity.moving:
+                    if self.destination == entity.destination:
+                        self.destination -= self.direction
+                        self.direction *= -1
+
             entity = get_entity(self.destination)
             if entity:
                 pass
