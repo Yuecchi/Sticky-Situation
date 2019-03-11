@@ -56,6 +56,8 @@ class Sprite:
 class Entity:
 
     entities = []
+    entity_updates = []
+    entity_drawing = []
     next_id = 1
 
     def __init__(self, pos, img, isTrigger):
@@ -142,7 +144,7 @@ class Player(Entity):
 
         self.state = Player.DEFAULT_STATE
         self.moving = False
-        self.destination = None
+        self.destination = self.pos
         self.direction = Vector((1, 0))
         self.speed = Player.WALK_SPEED
         self.distance = None
@@ -345,15 +347,23 @@ class Player(Entity):
                 return False
 
         def tile_conveyor_up(self, current_tile, destination_tile):
+            if self.state == PlayerState.WALK_DOWN:
+                return False
             return True
 
         def tile_conveyor_left(self, current_tile, destination_tile):
+            if self.state == PlayerState.WALK_RIGHT:
+                return False
             return True
 
         def tile_conveyor_down(self, current_tile, destination_tile):
+            if self.state == PlayerState.WALK_UP:
+                return False
             return True
 
         def tile_conveyor_right(self, current_tile, destination_tile):
+            if self.state == PlayerState.WALK_LEFT:
+                return False
             return True
 
         def tile_spikes(self, current_tile, destination_tile):
@@ -466,7 +476,7 @@ class Player(Entity):
             self.moving = True
         else:
             self.go_idle()
-            self.destination = None
+            self.destination = self.pos
 
     def go_idle(self):
         # TODO: may new to review this, but for now the model is sound
@@ -554,7 +564,7 @@ class Player(Entity):
                     self.moving = False
                     self.pos.to_int()
                     self.update_entitymap_pos()
-                    self.destination = None
+                    self.destination = self.pos
         else:
 
             if self.respawn_time > 0:
@@ -571,7 +581,7 @@ class PushBlock(Entity):
         Entity.__init__(self, pos, img, False)
 
         self.moving = False
-        self.destination = None
+        self.destination = self.pos
         self.direction = None
         self.speed = Player.WALK_SPEED
 
@@ -581,7 +591,7 @@ class PushBlock(Entity):
         self.dont_draw = False
 
         self.moving = False
-        self.destination = None
+        self.destination = self.pos
         self.direction = None
         self.speed = Player.WALK_SPEED
 
@@ -767,7 +777,7 @@ class PushBlock(Entity):
         if can_move:
             self.moving = True
         else:
-            self.destination = Vector((0, 0))
+            self.destination = self.pos
 
         return can_move
 
@@ -787,13 +797,18 @@ class PushBlock(Entity):
             self.check_current_tile(current_tile)
 
         if self.moving:
+            # TODO: detect if a space has become occupied
+            #  while you are moving into it
+            entity = get_entity(self.destination)
+            if entity:
+                pass
             if self.pos != self.destination:
-                self.pos = self.pos + (self.direction * self.speed)
+                self.pos += (self.direction * self.speed)
             else:
                 self.moving = False
                 self.pos.to_int()
                 self.update_entitymap_pos()
-                self.destination = Vector((0, 0))
+                self.destination = self.pos
 
 class Trigger(Entity):
 
@@ -1010,3 +1025,6 @@ def map_entity(entity):
 
 def unmap_entity(entity):
     game._game.level.entitymap[entity.pos.y][entity.pos.x] = 0
+
+def unmap_entity_pos(pos):
+    game._game.level.entitymap[pos.x][pos.y] = 0

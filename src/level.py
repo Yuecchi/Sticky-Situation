@@ -217,5 +217,22 @@ def load_level(path):
     game._game.camera.set_anchor(Entity.entities[0])
     game._game.level.store_reset_maps()
 
+    # create specific entity order for updates and drawing
+    temp = []
+    for entity in Entity.entities:
+        if entity.ENTITY_TYPE == PushBlock.ENTITY_TYPE:
+            temp.append(entity)
+        else:
+            Entity.entity_updates.append(entity)
+    Entity.entity_updates.extend(temp)
+
+    temp = []
+    for entity in Entity.entities:
+        if entity.isTrigger:
+            temp.append(entity)
+        else:
+            Entity.entity_drawing.append(entity)
+    Entity.entity_drawing.extend(temp)
+
     # close the level file
     file.close()

@@ -56,14 +56,15 @@ class Game:
     def draw(self, canvas):
 
         # update shit here (player pos, ai scripts, blah blah blah
-        for entity in Entity.entities:
+        for entity in Entity.entity_updates:
             entity.update()
 
         if self.camera.anchor:
             self.camera.update()
 
         self.level.tilemap.draw(canvas)
-        for entity in Entity.entities[::-1]:
+
+        for entity in Entity.entity_drawing[::-1]:
             entity.draw(canvas)
 
         """
@@ -76,8 +77,9 @@ class Game:
             canvas.draw_text(str(self.level.entitymap[i]), (0, 16 + (i * 16)), 16, "White")
         """
 
-        canvas.draw_text(str(block4.direction), (0, 16), 16, "White")
-        canvas.draw_text(str(block4.destination), (0, 32), 16, "White")
+        #canvas.draw_text(str(block4.direction), (0, 16), 16, "White")
+        #canvas.draw_text(str(block4.destination), (0, 32), 16, "White")
+        #canvas.draw_text(str(block4.moving), (0, 48), 16, "White")
 
         self.clock.tick()
 
@@ -144,12 +146,13 @@ tilemap = Tilemap(tilesheet, t_map)
 tilemap.save('../assets/testmap.txt')
 """
 
-
 # tilesheet = tileEngine.load_tilesheet('../assets/testsheet.txt')
+# testmap = tileEngine.load_tilemap('../assets/mapsmall.txt')
+
 testmap = tileEngine.load_tilemap('../assets/testmap.txt')
 level = Level(testmap)
 _game.change_level(level)
-player = Player(Vector((5, 25)), horse)
+player = Player(Vector((8, 17)), horse)
 _game.camera.set_anchor(player)
 
 block1 = PushBlock(Vector((9, 3)), testblock)
@@ -157,6 +160,7 @@ block2 = PushBlock(Vector((23, 2)), testblock)
 block3 = PushBlock(Vector((27, 12)), testblock)
 block4 = PushBlock(Vector((18, 26)), testblock)
 block4 = PushBlock(Vector((5, 24)), testblock)
+block5 = PushBlock(Vector((8, 18)), testblock)
 
 lever = Lever(Vector((5, 0)), testlever)
 lever_door = Door(Vector((3, 6)), testdoor)
@@ -177,9 +181,23 @@ loose_panel = LoosePanel(Vector((25, 3)), test_loose_panel)
 loose_panel_door = Door(Vector((24, 6)), testdoor)
 loose_panel.set_contact(loose_panel_door)
 
+temp = []
+for entity in Entity.entities:
+    if entity.ENTITY_TYPE == PushBlock.ENTITY_TYPE:
+        temp.append(entity)
+    else:
+        Entity.entity_updates.append(entity)
+Entity.entity_updates.extend(temp)
+
+temp = []
+for entity in Entity.entities:
+    if entity.isTrigger:
+        temp.append(entity)
+    else:
+        Entity.entity_drawing.append(entity)
+Entity.entity_drawing.extend(temp)
+
 _game.level.store_reset_maps()
 
 # level.save("../assets/level.txt")
-
-
 # level.load_level("../assets/level.txt")
