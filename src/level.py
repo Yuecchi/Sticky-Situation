@@ -21,6 +21,7 @@ from entities   import HorizontalTimedDoor
 from entities   import Scientist
 from entities   import ScientistState
 from entities   import MissileLauncher
+import tileEngine
 from tileEngine import TileType
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
@@ -135,12 +136,18 @@ def load_level(path):
 
     # TODO: will need to change this to load tilesheet as seperate files
 
+
+
     # create an empty list to store the three indexes
     index = []
 
     # open the tilesheet file
     file = open(path, "rt")
 
+    tilesheet_path = file.readline().strip("\n")
+    tilesheet = tileEngine.load_tilesheet(tilesheet_path)
+
+    """
     # read source image path
     img_path = file.readline().strip("\n")
 
@@ -152,6 +159,7 @@ def load_level(path):
 
     # create new tilesheet
     tilesheet = Tilesheet(img_path, index[0], index[1], index[2])
+    """
 
     # create an empty list to store the map
     map = []
@@ -183,8 +191,6 @@ def load_level(path):
             continue
         elif buffer == "ENTITIES_END":
             break
-
-        #TODO: will need to update this for new entities
 
         data = list_csv(buffer)
         if data[0] == Player.ENTITY_TYPE: # 1
@@ -229,6 +235,7 @@ def load_level(path):
             break
             
         data = list_csv(buffer)
+
         if Entity.entities[data[0] - 1].ENTITY_TYPE != Button.ENTITY_TYPE:
             Entity.entities[data[0] - 1].add_contact(Entity.entities[data[1] - 1])
         else:

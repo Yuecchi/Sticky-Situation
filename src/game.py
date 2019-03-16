@@ -128,10 +128,10 @@ _game.initialize_title_menu()
 """
 testsheet_path = '../assets/testsheet.png'
 index  = [1, 1, 10, 1, 1, 1, 1, 1, 1, 1, 1, 3 , 3 , 3 , 3 , 5 , 1 , 1 , 4 ]
-types  = [0, 2, 0 , 1, 1, 1, 1, 3, 4, 1, 1, 5 , 6 , 7 , 8 , 9 , 10, 11, 12]
+types  = [0, 2, 0 , 1, 1, 13, 1, 3, 4, 1, 1, 5 , 6 , 7 , 8 , 9 , 10, 11, 12]
 speeds = [1, 1, 8 , 1, 1, 1, 1, 1, 1, 1, 1, 15, 15, 15, 15, 15, 1 , 1 , 10]
 tilesheet = Tilesheet(testsheet_path, index, types, speeds)
-# tilesheet.save("../assets/testsheet.txt")
+# tilesheet.save("../assets/testsheet.txt")ss
 
 t_map = [
     [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],

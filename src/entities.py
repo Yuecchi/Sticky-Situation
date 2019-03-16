@@ -4,10 +4,8 @@ except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
 
 from enum import IntEnum
-
 import game
 import handlers
-
 from vectors import Vector
 import tileEngine
 from tileEngine import TileType
@@ -147,7 +145,7 @@ class PlayerState(IntEnum):
     WALK_RIGHT  = 7
     # space for jump up
     JUMP_LEFT   = 9
-    # space for jump down
+    JUMP_DOWN   = 10
     JUMP_RIGHT  = 11
     DEAD        = 12
 
@@ -228,6 +226,11 @@ class Player(Entity):
             self.sprite.set_animation(([0, 11], [4, 11]), 15)
             self.distance = 2
 
+        def jump_down(self):
+            self.state = PlayerState.JUMP_DOWN
+            self.sprite.set_animation(([0, 13], [4, 13]), 15)
+            self.distance = 2
+
         def jump_right(self):
             self.state = PlayerState.JUMP_RIGHT
             self.sprite.set_animation(([0, 12], [4, 12]), 15)
@@ -246,6 +249,7 @@ class Player(Entity):
             PlayerState.WALK_DOWN  : walk_down,
             PlayerState.WALK_RIGHT : walk_right,
             PlayerState.JUMP_LEFT  : jump_left,
+            PlayerState.JUMP_DOWN  : jump_down,
             PlayerState.JUMP_RIGHT : jump_right,
             PlayerState.DEAD       : dead
         }
@@ -381,7 +385,25 @@ class Player(Entity):
             else:
                 return False
 
-        #TODO: need to do up fence
+        def tile_up_fence(self, current_tile, destination_tile):
+            # check if the player is moving down
+            if self.pos.y < self.destination.y:
+                # check if the destination location isn't blocked
+                jump_location = self.pos + Vector((0, 2))
+                jump_destination = tileEngine.get_tile(jump_location)
+                entity = get_entity(jump_location)
+                if entity:
+                    if entity.ENTITY_TYPE != Panel.ENTITY_TYPE or entity.ENTITY_TYPE != LoosePanel.ENTITY_TYPE:
+                        return False
+                if self.check_destination_tile(current_tile, jump_destination):
+                    # change player destination and state
+                    self.destination = jump_location
+                    self.change_state(PlayerState.JUMP_DOWN)
+                    return True
+                else:
+                    return False
+            else:
+                return False
 
         def tile_conveyor_up(self, current_tile, destination_tile):
             if self.state == PlayerState.WALK_DOWN:
@@ -428,7 +450,8 @@ class Player(Entity):
             TileType.SPIKES         : tile_spikes,
             TileType.OPEN_PIT       : tile_open_pit,
             TileType.CLOSED_PIT     : tile_closed_pit,
-            TileType.GLUE           : tile_glue
+            TileType.GLUE           : tile_glue,
+            TileType.UP_FENCE       : tile_up_fence
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
@@ -758,7 +781,8 @@ class PushBlock(Entity):
         def tile_right_fence(self, current_tile, destination_tile):
             return False
 
-        #TODO: need to do up fence
+        def tile_up_fence(self, current_tile, destination_tile):
+            return False
 
         def tile_conveyor_up(self, current_tile, destination_tile):
             return True
@@ -797,7 +821,8 @@ class PushBlock(Entity):
             TileType.SPIKES         : tile_spikes,
             TileType.OPEN_PIT       : tile_open_pit,
             TileType.CLOSED_PIT     : tile_closed_pit,
-            TileType.GLUE           : tile_glue
+            TileType.GLUE           : tile_glue,
+            TileType.UP_FENCE       : tile_up_fence
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
@@ -1583,6 +1608,7 @@ class MissileLauncher(Entity):
         self.fuse  = 10
         self.range_sq = self.range * self.range
         self.fired = False
+        self.angle = 0
 
     def set_range(self, range):
         self.range = range
@@ -1599,7 +1625,8 @@ class MissileLauncher(Entity):
 
     def face_player(self, player, direction):
         angle = direction.angle()
-        #print(angle)
+        self.angle = angle
+        """"
         # turn the  launcher towards the player
         if (angle >= MissileLauncher.TOP_LEFT) and (angle < MissileLauncher.TOP_RIGHT):
             self.sprite.set_animation(([0, 0], [0, 0]), 1)
@@ -1613,6 +1640,7 @@ class MissileLauncher(Entity):
             self.sprite.set_animation(([3, 0], [3, 0]), 1)
         elif (angle >= 0) and (angle < MissileLauncher.TOP_LEFT):
             self.sprite.set_animation(([3, 0], [3, 0]), 1)
+        """
 
     def update(self):
         player = Entity.entities[0]
@@ -1623,6 +1651,9 @@ class MissileLauncher(Entity):
                 if not self.fired:
                     Missile(self.pos, direction, self)
                     self.fired = True
+
+    def draw(self, canvas):
+        self.sprite.rot_draw(canvas, self.pos, self.angle)
 
     def save_data(self):
         string = str(self.ENTITY_TYPE) + "," + str(self.spawn).strip("()") + "," + str(self.range) + "," + str(self.fuse)

@@ -1,7 +1,7 @@
 import math
 import tileEngine
 
-TILESIZE = 32
+TILESIZE = tileEngine.TILESIZE
 
 # The Vector class
 class Vector:
