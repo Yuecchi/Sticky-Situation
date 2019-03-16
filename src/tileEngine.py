@@ -28,6 +28,8 @@ class TileType(IntEnum):
     SPIKES         = 9
     OPEN_PIT       = 10
     CLOSED_PIT     = 11
+    GLUE           = 12
+    UP_FENCE       = 13
 
 class Tile:
 

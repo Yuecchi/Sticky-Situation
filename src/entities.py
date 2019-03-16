@@ -63,7 +63,7 @@ class Entity:
     entity_moveable = []
 
 
-    def __init__(self, pos, img, isTrigger):
+    def __init__(self, pos):
 
         # assign unique id to new entity and place it in the entity map
         self.id = Entity.next_id
@@ -72,9 +72,10 @@ class Entity:
         Entity.next_id += 1
         self.pos = pos
         self.spawn = pos
-        self.img = img
-        self.sprite = Sprite(self.img)
-        self.isTrigger = isTrigger
+        self.img = None
+        self.sprite = None
+        self.isTrigger = False
+        self.isDoor = False
 
         self.dead = False
         self.dont_draw = False
@@ -89,6 +90,16 @@ class Entity:
             return False
         else:
             return True
+
+    def check_destination(self):
+        for entity in Entity.entity_moveable:
+            if entity == self: continue
+            if entity.moving:
+                if self.destination == entity.destination:
+                    self.destination -= self.direction
+                    self.direction *= -1
+                    return False
+        return True
 
     def reset(self):
         pass
@@ -140,12 +151,14 @@ class Player(Entity):
     ENTITY_TYPE = 1
     WALK_SPEED  = 1 / 32
     DEFAULT_STATE = PlayerState.IDLE_DOWN
+    SPRITESHEET = simplegui._load_local_image('../assets/SS_Horse_1.1.png')
 
-    def __init__(self, pos, img):
+    def __init__(self, pos):
 
-        Entity.__init__(self, pos, img, False)
-
+        Entity.__init__(self, pos)
         Entity.entity_moveable.append(self)
+        self.img = Player.SPRITESHEET
+        self.sprite = Sprite(self.img)
 
         self.state = Player.DEFAULT_STATE
         self.moving = False
@@ -289,6 +302,9 @@ class Player(Entity):
         def tile_closed_pit(self):
             return True
 
+        def tile_glue(self):
+            self.kill()
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -301,7 +317,8 @@ class Player(Entity):
             TileType.CONVEYOR_RIGHT : tile_conveyor_right,
             TileType.SPIKES         : tile_spikes,
             TileType.OPEN_PIT       : tile_open_pit,
-            TileType.CLOSED_PIT     : tile_closed_pit
+            TileType.CLOSED_PIT     : tile_closed_pit,
+            TileType.GLUE           : tile_glue
         }
 
         tiles[current_tile.type](self)
@@ -380,6 +397,9 @@ class Player(Entity):
         def tile_closed_pit(self, current_tile, destination_tile):
             return True
 
+        def tile_glue(self, current_tile, destination_tile):
+            return True
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -392,7 +412,8 @@ class Player(Entity):
             TileType.CONVEYOR_RIGHT : tile_conveyor_right,
             TileType.SPIKES         : tile_spikes,
             TileType.OPEN_PIT       : tile_open_pit,
-            TileType.CLOSED_PIT     : tile_closed_pit
+            TileType.CLOSED_PIT     : tile_closed_pit,
+            TileType.GLUE           : tile_glue
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
@@ -417,23 +438,36 @@ class Player(Entity):
 
         def panel(self, entity):
             entity.switch()
+            return True
 
         def loose_panel(self, entity):
             entity.switch()
             game._game.level.entitymap[entity.pos.y][entity.pos.x] = self.id
             return True
 
-        def door(self, entity):
+        def vertical_door(self, entity):
+            return entity.open
+
+        def horizontal_door(self, entity):
+            return entity.open
+
+        def vertical_timed_door(self, entity):
+            return entity.open
+
+        def horizontal_timed_door(self, entity):
             return entity.open
 
         entities = {
-            Player.ENTITY_TYPE     : player,
-            PushBlock.ENTITY_TYPE  : push_block,
-            Lever.ENTITY_TYPE      : lever,
-            Button.ENTITY_TYPE     : button,
-            Panel.ENTITY_TYPE      : panel,
-            LoosePanel.ENTITY_TYPE : loose_panel,
-            Door.ENTITY_TYPE       : door
+            Player.ENTITY_TYPE              : player,
+            PushBlock.ENTITY_TYPE           : push_block,
+            Lever.ENTITY_TYPE               : lever,
+            Button.ENTITY_TYPE              : button,
+            Panel.ENTITY_TYPE               : panel,
+            LoosePanel.ENTITY_TYPE          : loose_panel,
+            VerticalDoor.ENTITY_TYPE        : vertical_door,
+            HorizontalDoor.ENTITY_TYPE      : horizontal_door,
+            VerticalTimedDoor.ENTITY_TYPE   : vertical_timed_door,
+            HorizontalTimedDoor.ENTITY_TYPE : horizontal_timed_door
         }
 
         return entities[entity.ENTITY_TYPE](self, entity)
@@ -449,9 +483,17 @@ class Player(Entity):
         def button(self, entity):
             entity.switch()
 
+        def panel(self, entity):
+            pass
+
+        def loose_panel(self, entity):
+            pass
+
         triggers = {
-            Lever.ENTITY_TYPE  : lever,
-            Button.ENTITY_TYPE : button
+            Lever.ENTITY_TYPE      : lever,
+            Button.ENTITY_TYPE     : button,
+            Panel.ENTITY_TYPE      : panel,
+            LoosePanel.ENTITY_TYPE : loose_panel
         }
 
         triggers[entity.ENTITY_TYPE](self, entity)
@@ -580,17 +622,20 @@ class Player(Entity):
 class PushBlock(Entity):
 
     ENTITY_TYPE = 2
+    SPRITESHEET = simplegui._load_local_image('../assets/testblock.png')
 
-    def __init__(self, pos, img):
+    def __init__(self, pos):
 
-        Entity.__init__(self, pos, img, False)
-
+        Entity.__init__(self, pos)
         Entity.entity_moveable.append(self)
+        self.img = PushBlock.SPRITESHEET
+        self.sprite = Sprite(self.img)
 
         self.moving = False
         self.destination = self.pos
         self.direction = None
         self.speed = Player.WALK_SPEED
+        self.stuck = False
 
     def reset(self):
         self.pos = self.spawn
@@ -651,6 +696,10 @@ class PushBlock(Entity):
         def tile_closed_pit(self):
             pass
 
+        def tile_glue(self):
+            self.stuck = True
+            pass
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -663,7 +712,8 @@ class PushBlock(Entity):
             TileType.CONVEYOR_RIGHT : tile_conveyor_right,
             TileType.SPIKES         : tile_spikes,
             TileType.OPEN_PIT       : tile_open_pit,
-            TileType.CLOSED_PIT     : tile_closed_pit
+            TileType.CLOSED_PIT     : tile_closed_pit,
+            TileType.GLUE           : tile_glue
         }
 
         tiles[current_tile.type](self)
@@ -706,6 +756,9 @@ class PushBlock(Entity):
         def tile_closed_pit(self, current_tile, destination_tile):
             return True
 
+        def tile_glue(self, current_tile, destination_tile):
+            return True
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -718,7 +771,8 @@ class PushBlock(Entity):
             TileType.CONVEYOR_RIGHT : tile_conveyor_right,
             TileType.SPIKES         : tile_spikes,
             TileType.OPEN_PIT       : tile_open_pit,
-            TileType.CLOSED_PIT     : tile_closed_pit
+            TileType.CLOSED_PIT     : tile_closed_pit,
+            TileType.GLUE           : tile_glue
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
@@ -746,22 +800,37 @@ class PushBlock(Entity):
             game._game.level.entitymap[entity.pos.y][entity.pos.x] = self.id
             return True
 
-        def door(self, entity):
+        def vertical_door(self, entity):
+            return entity.open
+
+        def horizontal_door(self, entity):
+            return entity.open
+
+        def vertical_timed_door(self, entity):
+            return entity.open
+
+        def horizontal_timed_door(self, entity):
             return entity.open
 
         entities = {
-            Player.ENTITY_TYPE     : player,
-            PushBlock.ENTITY_TYPE  : push_block,
-            Lever.ENTITY_TYPE      : lever,
-            Button.ENTITY_TYPE     : button,
-            Panel.ENTITY_TYPE      : panel,
-            LoosePanel.ENTITY_TYPE : loose_panel,
-            Door.ENTITY_TYPE       : door
+            Player.ENTITY_TYPE               : player,
+            PushBlock.ENTITY_TYPE            : push_block,
+            Lever.ENTITY_TYPE                : lever,
+            Button.ENTITY_TYPE               : button,
+            Panel.ENTITY_TYPE                : panel,
+            LoosePanel.ENTITY_TYPE           : loose_panel,
+            VerticalDoor.ENTITY_TYPE         : vertical_door,
+            HorizontalDoor.ENTITY_TYPE       : horizontal_door,
+            VerticalTimedDoor.ENTITY_TYPE    : vertical_timed_door,
+            HorizontalTimedDoor.ENTITY_TYPE  : horizontal_timed_door
         }
 
         return entities[entity.ENTITY_TYPE](self, entity)
 
     def move(self, newpos): # push block move method
+
+        if self.stuck:
+            return False
 
         can_move = True
         self.destination = newpos
@@ -779,6 +848,10 @@ class PushBlock(Entity):
         entity = get_entity(self.destination)
         if entity:
             can_move = self.check_entity(entity)
+
+        obstruction = self.check_destination()
+        if not obstruction:
+            can_move = obstruction
 
         # if all checks are fine, move
         if can_move:
@@ -804,15 +877,7 @@ class PushBlock(Entity):
             self.check_current_tile(current_tile)
 
         if self.moving:
-            # TODO: detect if a space has become occupied
-            #  while you are moving into it
-            for entity in Entity.entity_moveable:
-                if entity == self: continue
-                if entity.moving:
-                    if self.destination == entity.destination:
-                        self.destination -= self.direction
-                        self.direction *= -1
-
+            self.check_destination()
             entity = get_entity(self.destination)
             if entity:
                 pass
@@ -826,24 +891,36 @@ class PushBlock(Entity):
 
 class Trigger(Entity):
 
-    def __init__(self, pos, img):
-        Entity.__init__(self, pos, img, True)
+    def __init__(self, pos):
+        Entity.__init__(self, pos)
+        self.isTrigger = True
 
         self.on = False
+        self.contacts = []
         self.contact = None
+
+    def add_contact(self, contact):
+        self.contacts.append(contact)
 
     def set_contact(self, contact):
         self.contact = contact
 
+
+
 class Lever(Trigger):
 
     ENTITY_TYPE = 3
+    SPRITESHEET = simplegui._load_local_image('../assets/lever.png')
 
-    def __init__(self, pos, img):
+    def __init__(self, pos):
 
-        Trigger.__init__(self, pos, img)
+        Trigger.__init__(self, pos)
+        self.img = Lever.SPRITESHEET
+        self.sprite = Sprite(self.img)
 
     def reset(self):
+
+
         self.pos = self.spawn
         self.dead = False
 
@@ -851,25 +928,40 @@ class Lever(Trigger):
         self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
     def switch(self):
-        # check for an existing contact
-        if self.contact:
-            # attempt to trigger the contact
-            if self.contact.trigger():
-                # if the contact responds, flip the state
-                self.on = not self.on
+        # check if there are any existing contacts
+        if len(self.contacts) != 0:
 
-                if self.on:
-                    self.sprite.set_animation(([1, 0], [1, 0]), 1)
+            triggered = []
+            # attempt to trigger all contacts
+            for contact in self.contacts:
+
+                if contact.trigger():
+                    # store each contact which has successfully triggered
+                    triggered.append(contact)
                 else:
-                    self.sprite.set_animation(([0, 0], [0, 0]), 1)
+                    # if a contact does not trigger, reset all triggered contacts
+                    for trigger in triggered:
+                        trigger.trigger()
+                    return
+
+            # if all contacts sucessfully triggered, fltip the switch
+            self.on = not self.on
+
+            if self.on:
+                self.sprite.set_animation(([1, 0], [1, 0]), 1)
+            else:
+                self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
 class Button(Trigger):
 
     ENTITY_TYPE = 4
+    SPRITESHEET = simplegui._load_local_image('../assets/button.png')
 
-    def  __init__(self, pos, img):
+    def  __init__(self, pos):
 
-        Trigger.__init__(self, pos, img)
+        Trigger.__init__(self, pos)
+        self.img = Button.SPRITESHEET
+        self.sprite = Sprite(self.img)
 
         self.timer = 0
         self.time  = 0
@@ -910,13 +1002,17 @@ class Button(Trigger):
             if self.time == 0:
                 self.switch()
 
+
 class Panel(Trigger):
 
     ENTITY_TYPE = 5
+    SPRITESHEET = simplegui._load_local_image('../assets/panel.png')
 
-    def __init__(self, pos, img):
+    def __init__(self, pos):
 
-        Trigger.__init__(self, pos, img)
+        Trigger.__init__(self, pos)
+        self.img = Panel.SPRITESHEET
+        self.sprite = Sprite(self.img)
 
     def reset(self):
         self.pos = self.spawn
@@ -957,10 +1053,13 @@ class Panel(Trigger):
 class LoosePanel(Trigger):
 
     ENTITY_TYPE = 6
+    SPRITESHEET = simplegui._load_local_image('../assets/loose_panel.png')
 
-    def __init__(self, pos, img):
+    def __init__(self, pos):
 
-        Trigger.__init__(self, pos, img)
+        Trigger.__init__(self, pos)
+        self.img = LoosePanel.SPRITESHEET
+        self.sprite = Sprite(self.img)
 
     def reset(self):
         self.pos = self.spawn
@@ -991,13 +1090,14 @@ class LoosePanel(Trigger):
             if not get_entity(self.pos):
                 self.switch()
 
+#TODO: probably makes sense to make an ecompassing door class at this point
+
 class Door(Entity):
 
-    ENTITY_TYPE = 7
+    def __init__(self, pos):
 
-    def __init__(self, pos, img):
-
-        Entity.__init__(self, pos, img, False)
+        Entity.__init__(self, pos)
+        self.isDoor = True
 
         self.open = False
 
@@ -1016,6 +1116,8 @@ class Door(Entity):
             if entity.ENTITY_TYPE != self.ENTITY_TYPE:
                 return False
 
+        #TODO: do an entity destination check here
+
         self.open = not self.open
 
         if self.open:
@@ -1026,6 +1128,223 @@ class Door(Entity):
             self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
         return True
+
+class VerticalDoor(Door):
+
+    ENTITY_TYPE = 7
+    SPRITESHEET = simplegui._load_local_image('../assets/vert_door.png')
+
+    def __init__(self, pos):
+
+        Door.__init__(self, pos)
+        self.img = VerticalDoor.SPRITESHEET
+        self.sprite = Sprite(self.img)
+
+        self.open = False
+
+class HorizontalDoor(Door):
+
+    ENTITY_TYPE = 8
+    SPRITESHEET = simplegui._load_local_image('../assets/hori_door.png')
+
+    def __init__(self, pos):
+
+        Door.__init__(self, pos)
+        self.img = HorizontalDoor.SPRITESHEET
+        self.sprite = Sprite(self.img)
+
+        self.open = False
+
+class VerticalTimedDoor(Door):
+
+    ENTITY_TYPE = 9
+    SPRITESHEET = simplegui._load_local_image("../assets/vert_timed_door.png")
+
+    def __init__(self, pos):
+
+        Door.__init__(self, pos)
+        self.img = VerticalTimedDoor.SPRITESHEET
+        self.sprite= Sprite(self.img)
+
+        self.open = False
+        self.timer = 0
+        self.time = 0
+
+    def set_timer(self, timer):
+        self.timer = timer * 60
+
+    def trigger(self):
+
+        # if the door is closed, open it
+        if not self.open:
+            self.open = True
+            unmap_entity(self)
+            self.sprite.set_animation(([1, 0], [1, 0]), 1)
+
+
+        # restart the timer
+        self.time = self.timer
+        return True
+
+    def update(self):
+
+        if self.open:
+            if self.time > 0:
+                self.time -= 1
+            else:
+                # check for obstructions
+                entity = get_entity(self.pos)
+                if entity:
+                    if entity.ENTITY_TYPE != self.ENTITY_TYPE:
+                        return
+
+                # TODO: do an entity destination check here
+
+                # if no obstuctions are found, close the door
+                self.open = False
+                map_entity(self)
+                self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
+class HorizontalTimedDoor(Door):
+
+    ENTITY_TYPE = 10
+    SPRITESHEET = simplegui._load_local_image("../assets/hori_timed_door.png")
+
+    def __init__(self, pos):
+
+        Door.__init__(self, pos)
+        self.img = HorizontalTimedDoor.SPRITESHEET
+        self.sprite= Sprite(self.img)
+
+        self.open = False
+        self.timer = 0
+        self.time = 0
+
+    def set_timer(self, timer):
+        self.timer = timer * 60
+
+    def trigger(self):
+
+        # if the door is closed, open it
+        if not self.open:
+            self.open = True
+            unmap_entity(self)
+            self.sprite.set_animation(([1, 0], [1, 0]), 1)
+
+
+        # restart the timer
+        self.time = self.timer
+        return True
+
+    def update(self):
+
+        if self.open:
+            if self.time > 0:
+                self.time -= 1
+            else:
+                # check for obstructions
+                entity = get_entity(self.pos)
+                if entity:
+                    if entity.ENTITY_TYPE != self.ENTITY_TYPE:
+                        return
+
+                # TODO: do an entity destination check here
+
+                # if no obstuctions are found, close the door
+                self.open = False
+                map_entity(self)
+                self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
+
+class ScientistState(IntEnum):
+
+    WALK_UP    = 1
+    WALK_LEFT  = 2
+    WALK_DOWN  = 3
+    WALK_RIGHT = 4
+
+class Scientist(Entity):
+
+    ENTITY_TYPE = 11
+    SPRITESHEET = simplegui._load_local_image("../assets/scientist.png")
+    WALK_SPEED  = 1 / 32
+
+    def __init__(self, pos):
+
+        Entity.__init__(self, pos)
+        Entity.entity_moveable.append(self)
+        self.img = Scientist.SPRITESHEET
+        self.sprite = Sprite(self.img)
+
+        self.patrol = Vector()
+
+        self.state = None
+        self.moving = False
+        self.destination = Vector()
+        self.direction = Vector()
+        self.speed = Scientist.WALK_SPEED
+
+    def set_patrol(self, patrol):
+        self.patrol = patrol
+        direction = (self.patrol - self.pos).normalize()
+
+        if direction == Vector((0, -1)):
+            self.change_state(ScientistState.WALK_UP)
+        elif direction == Vector((-1, 0)):
+            self.change_state(ScientistState.WALK_LEFT)
+        elif direction == Vector((0, 1)):
+            self.change_state(ScientistState.WALK_DOWN)
+        elif direction == Vector((1, 0)):
+            self.change_state(ScientistState.WALK_RIGHT)
+
+    def change_direction(self):
+        direction = self.direction * -1
+
+        if direction == Vector((0, -1)):
+            self.change_state(ScientistState.WALK_UP)
+        elif direction == Vector((-1, 0)):
+            self.change_state(ScientistState.WALK_LEFT)
+        elif direction == Vector((0, 1)):
+            self.change_state(ScientistState.WALK_DOWN)
+        elif direction == Vector((1, 0)):
+            self.change_state(ScientistState.WALK_RIGHT)
+
+    def change_state(self, state):
+
+        def walk_up(self):
+            self.direction = Vector((0, -1))
+            self.sprite.set_animation(([0, 3], [3, 3]), 15)
+
+        def walk_left(self):
+            self.direction = Vector((-1, 0))
+            self.sprite.set_animation(([0, 1], [3, 1]), 15)
+
+        def walk_down(self):
+            self.direction = Vector((0, 1))
+            self.sprite.set_animation(([0, 0], [3, 0]), 15)
+
+        def walk_right(self):
+            self.direction = Vector((1, 0))
+            self.sprite.set_animation(([0, 2], [3, 2]), 15)
+
+        states = {
+
+            ScientistState.WALK_UP    : walk_up,
+            ScientistState.WALK_LEFT  : walk_left,
+            ScientistState.WALK_DOWN  : walk_down,
+            ScientistState.WALK_RIGHT : walk_right
+
+        }
+
+        states[state](self)
+
+    def move(self, newpos):
+        # need to do a whole load of bullshit
+        pass
+
+    def update(self):
+        # check if patrol point has been reached?
+        pass
 
 def get_entity(pos):
     entity_id = game._game.level.entitymap[pos.y][pos.x]
@@ -1039,6 +1358,3 @@ def map_entity(entity):
 
 def unmap_entity(entity):
     game._game.level.entitymap[entity.pos.y][entity.pos.x] = 0
-
-def unmap_entity_pos(pos):
-    game._game.level.entitymap[pos.x][pos.y] = 0
