@@ -134,10 +134,6 @@ def list_csv(buffer):
 
 def load_level(path):
 
-    # TODO: will need to change this to load tilesheet as seperate files
-
-
-
     # create an empty list to store the three indexes
     index = []
 

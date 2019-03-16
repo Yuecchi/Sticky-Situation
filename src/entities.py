@@ -276,6 +276,9 @@ class Player(Entity):
         def tile_right_fence(self):
             pass
 
+        def tile_up_fence(self):
+            pass
+
         def tile_conveyor_up(self):
             self.moving = True
             self.change_state(PlayerState.IDLE_UP)
@@ -316,6 +319,21 @@ class Player(Entity):
         def tile_glue(self):
             self.kill()
 
+        def tile_fire(self):
+            self.kill()
+
+        def tile_fan(self):
+            self.kill()
+
+        def tile_water(self):
+            self.kill()
+
+        def tile_laser(self):
+            self.kill()
+
+        def tile_ghost(self):
+            self.kill()
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -329,7 +347,13 @@ class Player(Entity):
             TileType.SPIKES         : tile_spikes,
             TileType.OPEN_PIT       : tile_open_pit,
             TileType.CLOSED_PIT     : tile_closed_pit,
-            TileType.GLUE           : tile_glue
+            TileType.GLUE           : tile_glue,
+            TileType.UP_FENCE       : tile_up_fence,
+            TileType.FIRE           : tile_fire,
+            TileType.FAN            : tile_fan,
+            TileType.WATER          : tile_water,
+            TileType.LASER          : tile_laser,
+            TileType.GHOST          : tile_ghost
         }
 
         tiles[current_tile.type](self)
@@ -437,6 +461,21 @@ class Player(Entity):
         def tile_glue(self, current_tile, destination_tile):
             return True
 
+        def tile_fire(self, current_tile, destination_tile):
+            return True
+
+        def tile_fan(self, current_tile, destination_tile):
+            return True
+
+        def tile_water(self, current_tile, destination_tile):
+            return True
+
+        def tile_laser(self, current_tile, destination_tile):
+            return True
+
+        def tile_ghost(self, current_tile, destination_tile):
+            return True
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -451,7 +490,12 @@ class Player(Entity):
             TileType.OPEN_PIT       : tile_open_pit,
             TileType.CLOSED_PIT     : tile_closed_pit,
             TileType.GLUE           : tile_glue,
-            TileType.UP_FENCE       : tile_up_fence
+            TileType.UP_FENCE       : tile_up_fence,
+            TileType.FIRE           : tile_fire,
+            TileType.FAN            : tile_fan,
+            TileType.WATER          : tile_water,
+            TileType.LASER          : tile_laser,
+            TileType.GHOST          : tile_ghost
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
@@ -708,6 +752,9 @@ class PushBlock(Entity):
         def tile_left_fence(self):
             pass
 
+        def tile_up_fence(self):
+            pass
+
         def tile_right_fence(self):
             pass
 
@@ -746,11 +793,27 @@ class PushBlock(Entity):
             self.stuck = True
             pass
 
+        def tile_fire(self):
+            pass
+
+        def tile_fan(self):
+            pass
+
+        def tile_water(self):
+            pass
+
+        def tile_laser(self):
+            pass
+
+        def tile_ghost(self):
+            pass
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
             TileType.ICY            : tile_icy,
             TileType.LEFT_FENCE     : tile_left_fence,
+            TileType.UP_FENCE       : tile_up_fence,
             TileType.RIGHT_FENCE    : tile_right_fence,
             TileType.CONVEYOR_UP    : tile_conveyor_up,
             TileType.CONVEYOR_LEFT  : tile_conveyor_left,
@@ -759,7 +822,12 @@ class PushBlock(Entity):
             TileType.SPIKES         : tile_spikes,
             TileType.OPEN_PIT       : tile_open_pit,
             TileType.CLOSED_PIT     : tile_closed_pit,
-            TileType.GLUE           : tile_glue
+            TileType.GLUE           : tile_glue,
+            TileType.FIRE           : tile_fire,
+            TileType.FAN            : tile_fan,
+            TileType.WATER          : tile_water,
+            TileType.LASER          : tile_laser,
+            TileType.GHOST          : tile_ghost
         }
 
         tiles[current_tile.type](self)
@@ -808,6 +876,21 @@ class PushBlock(Entity):
         def tile_glue(self, current_tile, destination_tile):
             return True
 
+        def tile_fire(self, current_tile, destination_tile):
+            return False
+
+        def tile_fan(self, current_tile, destination_tile):
+            return False
+
+        def tile_water(self, current_tile, destination_tile):
+            return False
+
+        def tile_laser(self, current_tile, destination_tile):
+            return False
+
+        def tile_ghost(self, current_tile, destination_tile):
+            return False
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -822,7 +905,12 @@ class PushBlock(Entity):
             TileType.OPEN_PIT       : tile_open_pit,
             TileType.CLOSED_PIT     : tile_closed_pit,
             TileType.GLUE           : tile_glue,
-            TileType.UP_FENCE       : tile_up_fence
+            TileType.UP_FENCE       : tile_up_fence,
+            TileType.FIRE           : tile_fire,
+            TileType.FAN            : tile_fan,
+            TileType.WATER          : tile_water,
+            TileType.LASER          : tile_laser,
+            TileType.GHOST          : tile_ghost
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
