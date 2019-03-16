@@ -14,19 +14,10 @@ from entities   import Lever
 from entities   import Button
 from entities   import Panel
 from entities   import LoosePanel
-from entities   import Door
+from entities   import VerticalDoor
 from tileEngine import TileType
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
-
-testsprite = simplegui._load_local_image('../assets/testsprite.png')
-testblock = simplegui._load_local_image('../assets/testblock.png')
-horse = simplegui._load_local_image('../assets/SS_Horse_1.1.png')
-testlever = simplegui._load_local_image('../assets/lever.png')
-testdoor = simplegui._load_local_image('../assets/door.png')
-testbutton = simplegui._load_local_image('../assets/button.png')
-test_panel = simplegui._load_local_image('../assets/panel.png')
-test_loose_panel = simplegui._load_local_image('../assets/loose_panel.png')
 
 class Level:
 
@@ -135,6 +126,8 @@ def list_csv(buffer):
 
 def load_level(path):
 
+    # TODO: will need to change this to load tilesheet as seperate files
+
     # create an empty list to store the three indexes
     index = []
 
@@ -183,21 +176,23 @@ def load_level(path):
         elif buffer == "ENTITIES_END":
             break
 
+        #TODO: will need to update this for new entities
+
         data = list_csv(buffer)
         if data[0] == Player.ENTITY_TYPE:
-            Player(Vector((data[1], data[2])), horse)
+            Player(Vector((data[1], data[2])))
         elif data[0] == PushBlock.ENTITY_TYPE:
-            PushBlock(Vector((data[1], data[2])), testblock)
+            PushBlock(Vector((data[1], data[2])))
         elif data[0] == Lever.ENTITY_TYPE:
-            Lever(Vector((data[1], data[2])), testlever)
+            Lever(Vector((data[1], data[2])))
         elif data[0] == Button.ENTITY_TYPE:
-            Button(Vector((data[1], data[2])), testbutton)
+            Button(Vector((data[1], data[2])))
         elif data[0] == Panel.ENTITY_TYPE:
-            Panel(Vector((data[1], data[2])), test_panel)
+            Panel(Vector((data[1], data[2])))
         elif data[0] == LoosePanel.ENTITY_TYPE:
-            LoosePanel(Vector((data[1], data[2])), test_loose_panel)
-        elif data[0] == Door.ENTITY_TYPE:
-            Door(Vector((data[1], data[2])), testdoor)
+            LoosePanel(Vector((data[1], data[2])))
+        elif data[0] == VerticalDoor.ENTITY_TYPE:
+            VerticalDoor(Vector((data[1], data[2])))
 
 
     # retrieve contact data and set contacts
@@ -213,7 +208,7 @@ def load_level(path):
         if len(data) == 3:
             Entity.entities[data[0] - 1].set_timer(data[2])
 
-    # aset player as camera anchor and store default map state
+    # set player as camera anchor and store default map state
     game._game.camera.set_anchor(Entity.entities[0])
     game._game.level.store_reset_maps()
 
