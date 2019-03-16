@@ -44,6 +44,9 @@ class Clock:
     def transition(self, rate):
         return not(self.t % rate)
 
+    def reset(self):
+        self.t = 0
+
 class GameState(IntEnum):
 
     TITLE = 1

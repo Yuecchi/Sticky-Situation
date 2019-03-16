@@ -2,7 +2,7 @@ try:
     import simplegui
 except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
-from gfx import clock  # This says it isn't used, but it is - keep it
+from game import _game
 from tileEngine import Tile
 from vectors import Vector
 
@@ -350,7 +350,7 @@ class LevelTileSheet:
                     # the original i should be stored though, for finishing the animation
                     self.map[row][col] = self.tile_count
                     # create tile and add it to the tile sheet
-                self.tiles.append(Tile(self.img, start_index.copy(), end_index.copy(), animated))
+                self.tiles.append(Tile(self.img, start_index.copy(), end_index.copy(), animated, 0, 1))
                 self.tile_count += 1
             else:
                 # If big tile, then fill other rows with -1 and the ones of the same row normally
@@ -365,7 +365,7 @@ class LevelTileSheet:
                             self.map[row][col] = self.tile_count
                             self.tile_count += 1
                             # Create tiles here too probably
-                            self.tiles.append(Tile(self.img, [col, row], [col, row], False))
+                            self.tiles.append(Tile(self.img, [col, row], [col, row], False, 0, 1))
 
             # move to the next tile on the sheet
             index_i += 1
@@ -378,7 +378,7 @@ class LevelTileSheet:
                 while self.map[start_index[1]][start_index[0]] == -1:
                     self.map[start_index[1]][start_index[0]] = self.tile_count
                     self.tile_count += 1
-                    self.tiles.append(Tile(self.img, start_index.copy(), start_index.copy(), False))
+                    self.tiles.append(Tile(self.img, start_index.copy(), start_index.copy(), False, 0, 1))
                     start_index[0] = (start_index[0] + 1) % self.cols
                     if start_index[0] == 0:
                         start_index[1] += 1
@@ -390,7 +390,7 @@ class LevelTileSheet:
             if self.map[start_index[1]][start_index[0]] == -1:
                 self.map[start_index[1]][start_index[0]] = self.tile_count
                 self.tile_count += 1
-                self.tiles.append(Tile(self.img, start_index.copy(), start_index.copy(), False))
+                self.tiles.append(Tile(self.img, start_index.copy(), start_index.copy(), False, 0, 1))
             start_index[0] = (start_index[0] + 1) % self.cols
             if start_index[0] == 0:
                 start_index[1] += 1
@@ -1300,7 +1300,7 @@ def drag(pos):
 
 
 def draw(canvas):
-    global clock
+    global _game
     if level_loaded:
         for i in range(len(inputs.tile_sheet.tiles)):
             # resets the update flags on all tiles before drawing them
@@ -1312,9 +1312,9 @@ def draw(canvas):
         tools.draw(canvas)
         if tools.entityState.state == 1 and tools.selectState.state == 1:
             toolbar.draw(canvas)
-        clock.tick()
+        _game.clock.tick()
     else:
-        clock.reset()
+        _game.clock.reset()
 
 
 def load(name):
