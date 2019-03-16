@@ -11,10 +11,13 @@ import handlers
 from vectors import Vector
 import tileEngine
 from tileEngine import TileType
+import math
 
 TILESIZE = tileEngine.TILESIZE
 HALFSIZE = tileEngine.HALFSIZE
 TILE_DIMS = tileEngine.TILE_DIMS
+
+#todo: need to account for newest tiletypes in entity tile check methods(both destination and current)
 
 class Sprite:
 
@@ -40,6 +43,14 @@ class Sprite:
         pos = (HALFSIZE + ((map_pos.x - scroll.x) * TILESIZE), HALFSIZE + ((map_pos.y - scroll.y) * TILESIZE))
         src_pos = (HALFSIZE + (self.current_index[0] * TILESIZE), HALFSIZE + (self.current_index[1] * TILESIZE))
         canvas.draw_image(self.img, src_pos, TILE_DIMS, pos, TILE_DIMS)
+
+        if game._game.clock.transition(self.animation_speed): self.next_frame()
+
+    def rot_draw(self, canvas, map_pos, angle):
+        scroll =  game._game.camera.pos
+        pos = (HALFSIZE + ((map_pos.x - scroll.x) * TILESIZE), HALFSIZE + ((map_pos.y - scroll.y) * TILESIZE))
+        src_pos = (HALFSIZE + (self.current_index[0] * TILESIZE), HALFSIZE + (self.current_index[1] * TILESIZE))
+        canvas.draw_image(self.img, src_pos, TILE_DIMS, pos, TILE_DIMS, angle)
 
         if game._game.clock.transition(self.animation_speed): self.next_frame()
 
@@ -119,13 +130,7 @@ class Entity:
         return string
 
     def contact_data(self):
-        if self.isTrigger:
-            if self.contact:
-                if self.ENTITY_TYPE == Button.ENTITY_TYPE:
-                    string = str(self.id) + "," + str(self.contact.id) + "," + str(self.timer // 60)
-                else:
-                    string = str(self.id) + "," + str(self.contact.id)
-                return string
+        pass
 
     def display(self):
         return str(self.ENTITY_TYPE)
@@ -169,6 +174,8 @@ class Player(Entity):
 
         self.respawn_timer = 3
         self.respawn_time  = 0
+
+        self.hitbox = Hitbox(self.pos)
 
     def change_state(self, state):
 
@@ -334,14 +341,16 @@ class Player(Entity):
         def tile_icy(self, current_tile, destination_tile):
             return True
 
-        # TODO: I still need to account for entities blocking the destination
-        #  probably also need to account for over a fence into a fence (easy fix)
         def tile_left_fence(self, current_tile, destination_tile):
             # check if the player is moving from right to left
             if self.pos.x > self.destination.x:
                 # check if the destination location isn't blocked
                 jump_location = self.pos + Vector((-2, 0))
                 jump_destination = tileEngine.get_tile(jump_location)
+                entity = get_entity(jump_location)
+                if entity:
+                    if entity.ENTITY_TYPE != Panel.ENTITY_TYPE or entity.ENTITY_TYPE != LoosePanel.ENTITY_TYPE:
+                        return False
                 if self.check_destination_tile(current_tile, jump_destination):
                     # change player destination and state
                     self.destination = jump_location
@@ -358,6 +367,10 @@ class Player(Entity):
                 # check if the destination location isn't blocked
                 jump_location = self.pos + Vector((2, 0))
                 jump_destination = tileEngine.get_tile(jump_location)
+                entity = get_entity(jump_location)
+                if entity:
+                    if entity.ENTITY_TYPE != Panel.ENTITY_TYPE or entity.ENTITY_TYPE != LoosePanel.ENTITY_TYPE:
+                        return False
                 if self.check_destination_tile(current_tile, jump_destination):
                     # change player destination and state
                     self.destination = jump_location
@@ -367,6 +380,8 @@ class Player(Entity):
                     return False
             else:
                 return False
+
+        #TODO: need to do up fence
 
         def tile_conveyor_up(self, current_tile, destination_tile):
             if self.state == PlayerState.WALK_DOWN:
@@ -461,6 +476,9 @@ class Player(Entity):
             # TODO: may want to improve collision detection on scientists
             self.kill()
 
+        def missile_launcher(self, entity):
+            return False
+
         entities = {
             Player.ENTITY_TYPE              : player,
             PushBlock.ENTITY_TYPE           : push_block,
@@ -472,7 +490,8 @@ class Player(Entity):
             HorizontalDoor.ENTITY_TYPE      : horizontal_door,
             VerticalTimedDoor.ENTITY_TYPE   : vertical_timed_door,
             HorizontalTimedDoor.ENTITY_TYPE : horizontal_timed_door,
-            Scientist.ENTITY_TYPE           : scientist
+            Scientist.ENTITY_TYPE           : scientist,
+            MissileLauncher.ENTITY_TYPE     : missile_launcher
         }
 
         return entities[entity.ENTITY_TYPE](self, entity)
@@ -531,7 +550,6 @@ class Player(Entity):
             self.destination = self.pos
 
     def go_idle(self):
-        # TODO: may new to review this, but for now the model is sound
         if not self.dead:
             self.change_state(self.state % 4)
 
@@ -547,9 +565,8 @@ class Player(Entity):
     def kill(self):
         if not self.dead:
             # set dead flag to true
-            self.dead = True
-            # remove from entity map
-            unmap_entity(self)
+            self.dead = True#
+            self.moving = False
             # set animation looping to false
             self.sprite.loop_animations = False
             # play death animation (urgh)
@@ -579,8 +596,9 @@ class Player(Entity):
 
         # check current location
         if not self.moving:
-            current_tile = tileEngine.get_tile(self.pos)
-            self.check_current_tile(current_tile)
+            if not self.dead:
+                current_tile = tileEngine.get_tile(self.pos)
+                self.check_current_tile(current_tile)
 
         if not self.dead:
             # check if the player is already moving or not
@@ -612,6 +630,7 @@ class Player(Entity):
                 # keep moving towards the destination until is has been reached
                 if self.pos != self.destination:
                     self.pos += (self.direction * self.speed)
+                    self.hitbox.update(self.pos)
                 else:
                     self.moving = False
                     self.pos.to_int()
@@ -739,6 +758,8 @@ class PushBlock(Entity):
         def tile_right_fence(self, current_tile, destination_tile):
             return False
 
+        #TODO: need to do up fence
+
         def tile_conveyor_up(self, current_tile, destination_tile):
             return True
 
@@ -819,6 +840,9 @@ class PushBlock(Entity):
         def scientist(self, entity):
             return False
 
+        def missile_launcher(self, entity):
+            return False
+
         entities = {
             Player.ENTITY_TYPE               : player,
             PushBlock.ENTITY_TYPE            : push_block,
@@ -830,7 +854,8 @@ class PushBlock(Entity):
             HorizontalDoor.ENTITY_TYPE       : horizontal_door,
             VerticalTimedDoor.ENTITY_TYPE    : vertical_timed_door,
             HorizontalTimedDoor.ENTITY_TYPE  : horizontal_timed_door,
-            Scientist.ENTITY_TYPE            : scientist
+            Scientist.ENTITY_TYPE            : scientist,
+            MissileLauncher.ENTITY_TYPE      : missile_launcher
         }
 
         return entities[entity.ENTITY_TYPE](self, entity)
@@ -913,8 +938,6 @@ class Trigger(Entity):
     def set_contact(self, contact):
         self.contact = contact
 
-
-
 class Lever(Trigger):
 
     ENTITY_TYPE = 3
@@ -959,6 +982,16 @@ class Lever(Trigger):
             else:
                 self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
+    def contact_data(self):
+        if len(self.contacts) != 0:
+            string = ""
+            for i in range(len(self.contacts)):
+                if (i + 1) < len(self.contacts):
+                    string += str(self.id) + "," + str(self.contacts[i].id) + "\n"
+                else:
+                    string += str(self.id) + "," + str(self.contacts[i].id)
+            return string
+
 class Button(Trigger):
 
     ENTITY_TYPE = 4
@@ -1000,6 +1033,10 @@ class Button(Trigger):
                     self.time = 0
                     self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
+    def contact_data(self):
+        string = str(self.id) + "," + str(self.contact.id)
+        return string
+
     def update(self):
 
         # check timer
@@ -1009,6 +1046,9 @@ class Button(Trigger):
             if self.time == 0:
                 self.switch()
 
+    def save_data(self):
+        string = str(self.ENTITY_TYPE) + "," + str(self.spawn).strip("()") + "," + str(self.timer // 60)
+        return string
 
 class Panel(Trigger):
 
@@ -1028,20 +1068,42 @@ class Panel(Trigger):
         self.on = False
         self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
-
     def switch(self):
+        # check if there are any existing contacts
+        if len(self.contacts) != 0:
 
-        if self.contact:
+            triggered = []
+            # attempt to trigger all contacts
+            for contact in self.contacts:
 
-            if self.contact.trigger():
-                self.on = not self.on
-
-                if self.on:
-                    unmap_entity(self)
-                    self.sprite.set_animation(([1, 0], [1, 0]), 1)
+                if contact.trigger():
+                    # store each contact which has successfully triggered
+                    triggered.append(contact)
                 else:
-                    map_entity(self)
-                    self.sprite.set_animation(([0, 0], [0, 0]), 1)
+                    # if a contact does not trigger, reset all triggered contacts
+                    for trigger in triggered:
+                        trigger.trigger()
+                    return
+
+            # if all contacts sucessfully triggered, fltip the switch
+            self.on = not self.on
+
+            if self.on:
+                unmap_entity(self)
+                self.sprite.set_animation(([1, 0], [1, 0]), 1)
+            else:
+                map_entity(self)
+                self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
+    def contact_data(self):
+        if len(self.contacts) != 0:
+            string = ""
+            for i in range(len(self.contacts)):
+                if (i + 1) < len(self.contacts):
+                    string += str(self.id) + "," + str(self.contacts[i].id) + "\n"
+                else:
+                    string += str(self.id) + "," + str(self.contacts[i].id)
+            return string
 
     def trigger(self):
 
@@ -1076,19 +1138,41 @@ class LoosePanel(Trigger):
         self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
     def switch(self):
+        # check if there are any existing contacts
+        if len(self.contacts) != 0:
 
-        if self.contact:
+            triggered = []
+            # attempt to trigger all contacts
+            for contact in self.contacts:
 
-            if self.contact.trigger():
-
-                self.on = not self.on
-
-                if self.on:
-                    unmap_entity(self)
-                    self.sprite.set_animation(([1, 0], [1, 0]), 1)
+                if contact.trigger():
+                    # store each contact which has successfully triggered
+                    triggered.append(contact)
                 else:
-                    map_entity(self)
-                    self.sprite.set_animation(([0, 0], [0, 0]), 1)
+                    # if a contact does not trigger, reset all triggered contacts
+                    for trigger in triggered:
+                        trigger.trigger()
+                    return
+
+            # if all contacts sucessfully triggered, fltip the switch
+            self.on = not self.on
+
+            if self.on:
+                unmap_entity(self)
+                self.sprite.set_animation(([1, 0], [1, 0]), 1)
+            else:
+                map_entity(self)
+                self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
+    def contact_data(self):
+        if len(self.contacts) != 0:
+            string = ""
+            for i in range(len(self.contacts)):
+                if (i + 1) < len(self.contacts):
+                    string += str(self.id) + "," + str(self.contacts[i].id) + "\n"
+                else:
+                    string += str(self.id) + "," + str(self.contacts[i].id)
+            return string
 
     def update(self):
 
@@ -1096,8 +1180,6 @@ class LoosePanel(Trigger):
             # check if there is anything keeping it pressed down
             if not get_entity(self.pos):
                 self.switch()
-
-#TODO: probably makes sense to make an ecompassing door class at this point
 
 class Door(Entity):
 
@@ -1212,6 +1294,10 @@ class VerticalTimedDoor(Door):
                 map_entity(self)
                 self.sprite.set_animation(([0, 0], [0, 0]), 1)
 
+    def save_data(self):
+        string = str(self.ENTITY_TYPE) + "," + str(self.spawn).strip("()") + "," + str(self.timer // 60)
+        return string
+
 class HorizontalTimedDoor(Door):
 
     ENTITY_TYPE = 10
@@ -1261,6 +1347,10 @@ class HorizontalTimedDoor(Door):
                 self.open = False
                 map_entity(self)
                 self.sprite.set_animation(([0, 0], [0, 0]), 1)
+
+    def save_data(self):
+        string = str(self.ENTITY_TYPE) + "," + str(self.spawn).strip("()") + "," + str(self.timer // 60)
+        return string
 
 
 class ScientistState(IntEnum):
@@ -1349,7 +1439,7 @@ class Scientist(Entity):
 
         states[state](self)
 
-    def check_entity(self, entity): # player check entity method
+    def check_entity(self, entity): # scientist check entity method
 
         def player(self, entity):
             entity.kill()
@@ -1399,6 +1489,10 @@ class Scientist(Entity):
             self.change_direction()
             return True
 
+        def missile_launcher(self, entity):
+            self.change_direction()
+            return True
+
         entities = {
             Player.ENTITY_TYPE              : player,
             PushBlock.ENTITY_TYPE           : push_block,
@@ -1410,7 +1504,8 @@ class Scientist(Entity):
             HorizontalDoor.ENTITY_TYPE      : horizontal_door,
             VerticalTimedDoor.ENTITY_TYPE   : vertical_timed_door,
             HorizontalTimedDoor.ENTITY_TYPE : horizontal_timed_door,
-            Scientist.ENTITY_TYPE           : scientist
+            Scientist.ENTITY_TYPE           : scientist,
+            MissileLauncher.ENTITY_TYPE     : missile_launcher
         }
 
         return entities[entity.ENTITY_TYPE](self, entity)
@@ -1463,6 +1558,210 @@ class Scientist(Entity):
                 else:
                     self.move(self.pos + self.direction)
 
+    def save_data(self):
+        string = str(self.ENTITY_TYPE) + "," + str(self.spawn).strip("()") + "," + str(self.patrol).strip("()")
+        return string
+
+class MissileLauncher(Entity):
+
+    ENTITY_TYPE = 12
+    SPRITESHEET = simplegui._load_local_image("../assets/missile_launcher.png")
+
+    # pre calculate angles
+    TOP_LEFT     = math.pi * 0.25
+    TOP_RIGHT    = 3 * math.pi * 0.25
+    BOTTOM_LEFT  = -TOP_LEFT
+    BOTTOM_RIGHT = -TOP_RIGHT
+
+    def __init__(self, pos):
+
+        Entity.__init__(self, pos)
+        self.img = MissileLauncher.SPRITESHEET
+        self.sprite = Sprite(self.img)
+
+        self.range = 5
+        self.fuse  = 10
+        self.range_sq = self.range * self.range
+        self.fired = False
+
+    def set_range(self, range):
+        self.range = range
+
+    def set_fuse(self, fuse):
+        self.fuse = fuse
+
+    def check_range(self, player):
+        dist_vec = player.pos - self.pos
+        distance = dist_vec.dot(dist_vec)
+        if distance < self.range_sq:
+            return True
+        return False
+
+    def face_player(self, player, direction):
+        angle = direction.angle()
+        #print(angle)
+        # turn the  launcher towards the player
+        if (angle >= MissileLauncher.TOP_LEFT) and (angle < MissileLauncher.TOP_RIGHT):
+            self.sprite.set_animation(([0, 0], [0, 0]), 1)
+        elif (angle >= MissileLauncher.TOP_LEFT) and (angle < math.pi):
+            self.sprite.set_animation(([1, 0], [1, 0]), 1)
+        elif (angle <= MissileLauncher.BOTTOM_RIGHT) and (angle > -math.pi):
+            self.sprite.set_animation(([1, 0], [1, 0]), 1)
+        elif (angle <= MissileLauncher.BOTTOM_LEFT) and (angle > MissileLauncher.BOTTOM_RIGHT):
+            self.sprite.set_animation(([2, 0], [2, 0]), 1)
+        elif (angle <= 0 ) and (angle > MissileLauncher.BOTTOM_LEFT):
+            self.sprite.set_animation(([3, 0], [3, 0]), 1)
+        elif (angle >= 0) and (angle < MissileLauncher.TOP_LEFT):
+            self.sprite.set_animation(([3, 0], [3, 0]), 1)
+
+    def update(self):
+        player = Entity.entities[0]
+        if not player.dead:
+            if self.check_range(player):
+                direction = player.pos - self.pos
+                self.face_player(player, direction)
+                if not self.fired:
+                    Missile(self.pos, direction, self)
+                    self.fired = True
+
+    def save_data(self):
+        string = str(self.ENTITY_TYPE) + "," + str(self.spawn).strip("()") + "," + str(self.range) + "," + str(self.fuse)
+        return string
+
+class Projectile:
+
+    projectiles = []
+
+    def __init__(self, pos, direction):
+
+        self.pos = pos
+        self.direction = direction.normalize()
+        self.hitbox = Hitbox(pos)
+
+        Projectile.projectiles.append(self)
+
+class Missile(Projectile):
+
+    SPRITESHEET = simplegui._load_local_image("../assets/missile.png")
+    SPEED = 1 / 64
+
+    # pre calculate angles
+    CENTER       = Vector((17, 15))
+    TOP_LEFT     = (Vector((0 , 12)) - CENTER).angle()
+    TOP_RIGHT    = (Vector((31, 12)) - CENTER).angle()
+    BOTTOM_RIGHT = (Vector((31, 19)) - CENTER).angle()
+    BOTTOM_LEFT  = (Vector((0 , 19)) - CENTER).angle()
+    LENGTH       = 15
+
+    def __init__(self, pos, direction, launcher):
+
+        Projectile.__init__(self, pos, direction)
+
+        self.img = Missile.SPRITESHEET
+        self.sprite = Sprite(self.img)
+
+        self.launcher = launcher
+        self.angle = 0
+        self.timer = launcher.fuse
+        self.time = self.timer * 60
+
+        self.exploded = False
+
+    def get_direction(self):
+        player = Entity.entities[0]
+        self.direction = (player.pos - self.pos).normalize()
+        self.angle = self.direction.angle()
+
+    def explode(self):
+        self.sprite.set_animation(([1, 0], [8, 0]), 5)
+        self.sprite.loop_animations = False
+        self.exploded = True
+
+    def check_collisions(self):
+
+        # get the true center position of the missile
+        pos = Vector((HALFSIZE + (self.pos.x * TILESIZE), HALFSIZE + (self.pos.y * TILESIZE)))
+
+        # calculate contact points
+        contact_points = [
+            (pos + Vector((math.cos(Missile.TOP_LEFT     + self.angle), math.sin(Missile.TOP_LEFT     + self.angle))) * Missile.LENGTH).to_grid(),
+            (pos + Vector((math.cos(Missile.TOP_RIGHT    + self.angle), math.sin(Missile.TOP_RIGHT    + self.angle))) * Missile.LENGTH).to_grid(),
+            (pos + Vector((math.cos(Missile.BOTTOM_LEFT  + self.angle), math.sin(Missile.BOTTOM_LEFT  + self.angle))) * Missile.LENGTH).to_grid(),
+            (pos + Vector((math.cos(Missile.BOTTOM_RIGHT + self.angle), math.sin(Missile.BOTTOM_RIGHT + self.angle))) * Missile.LENGTH).to_grid()
+        ]
+
+        for p in contact_points:
+            tile = tileEngine.get_tile(p)
+            if tile.type == TileType.SOLID:
+                self.explode()
+                return
+
+            entity = get_entity(p)
+            if entity:
+                if entity.ENTITY_TYPE == PushBlock.ENTITY_TYPE:
+                    self.explode()
+                    return
+                elif entity.isDoor:
+                    if not entity.open:
+                        self.explode()
+                        return
+
+        # obligatory bounding volume overlap test to meet the spec
+        player = Entity.entities[0]
+        if self.hitbox.overlap(player.hitbox):
+            self.explode()
+            player.kill()
+
+    def update(self):
+
+        if not self.exploded:
+            # check missile timer
+            if self.time > 0:
+                self.time -= 1
+            else:
+                self.explode()
+
+        if not self.exploded:
+            # check for collisions with walls
+            self.get_direction()
+            self.check_collisions()
+
+        if self.exploded:
+            # check if the explosion animation has finished
+            if self.sprite.current_index == [8, 0]:
+                # delete the missile
+                Projectile.projectiles.remove(self)
+                # prepare launcher to fire again
+                self.launcher.fired = False
+            return
+
+        # move missile
+        self.pos += (self.direction * Missile.SPEED)
+        self.hitbox.update(self.pos)
+
+
+    def draw(self, canvas):
+        self.sprite.rot_draw(canvas, self.pos, self.angle)
+
+class Hitbox:
+
+    SIZE = TILESIZE * 0.6
+
+    def __init__(self, pos):
+
+        self.pos = (pos * TILESIZE) - Vector((HALFSIZE, HALFSIZE))
+
+    # bounding box overlap check
+    def overlap(self, hitbox):
+        if self.pos.x + Hitbox.SIZE < hitbox.pos.x: return False
+        elif self.pos.x > hitbox.pos.x + Hitbox.SIZE: return False
+        elif self.pos.y + Hitbox.SIZE < hitbox.pos.y: return False
+        elif self.pos.y > hitbox.pos.y + Hitbox.SIZE: return False
+        return True
+
+    def update(self, pos):
+        self.pos = (pos * TILESIZE) - Vector((HALFSIZE, HALFSIZE))
+
 def get_entity(pos):
     entity_id = game._game.level.entitymap[pos.y][pos.x]
     if bool(entity_id):
@@ -1474,4 +1773,4 @@ def map_entity(entity):
     game._game.level.entitymap[entity.pos.y][entity.pos.x] = entity.id
 
 def unmap_entity(entity):
-    game._game.level.entitymap[entity.pos.y][entity.pos.x] = 0
+    game._game.level.entitymap[int(entity.pos.y)][int(entity.pos.x)] = 0

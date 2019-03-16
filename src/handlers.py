@@ -3,6 +3,21 @@ try:
 except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
 
+class Mouse:
+
+    def __init__(self):
+        self.pos = (0, 0)
+        self.reset()
+
+    def mouseclick(self, pos):
+        self.pos = pos
+        self.clicked = True
+
+    def reset(self):
+        self.clicked = False
+
+mouse = Mouse()
+
 class Keyboard:
 
     def __init__(self):

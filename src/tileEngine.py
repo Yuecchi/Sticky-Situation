@@ -30,6 +30,11 @@ class TileType(IntEnum):
     CLOSED_PIT     = 11
     GLUE           = 12
     UP_FENCE       = 13
+    FIRE           = 14
+    FAN            = 15
+    WATER          = 16
+    LASER          = 17
+    GHOST          = 18
 
 class Tile:
 

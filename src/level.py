@@ -15,6 +15,12 @@ from entities   import Button
 from entities   import Panel
 from entities   import LoosePanel
 from entities   import VerticalDoor
+from entities   import HorizontalDoor
+from entities   import VerticalTimedDoor
+from entities   import HorizontalTimedDoor
+from entities   import Scientist
+from entities   import ScientistState
+from entities   import MissileLauncher
 from tileEngine import TileType
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
@@ -102,6 +108,7 @@ class Level:
             file.write(buffer)
         file.write("ENTITIES_END\n")
 
+        # todo: need to save multiple contacts
         # save contacts
         file.write("CONTACTS_START\n")
         for entity in Entity.entities:
@@ -169,6 +176,7 @@ def load_level(path):
     Entity.entities = []
 
     # retrieve entity data and create entities
+    entity_index = 0
     for line in file:
         buffer = line.strip("\n")
         if buffer == "ENTITIES_START":
@@ -179,21 +187,38 @@ def load_level(path):
         #TODO: will need to update this for new entities
 
         data = list_csv(buffer)
-        if data[0] == Player.ENTITY_TYPE:
+        if data[0] == Player.ENTITY_TYPE: # 1
             Player(Vector((data[1], data[2])))
-        elif data[0] == PushBlock.ENTITY_TYPE:
+        elif data[0] == PushBlock.ENTITY_TYPE: # 2
             PushBlock(Vector((data[1], data[2])))
-        elif data[0] == Lever.ENTITY_TYPE:
+        elif data[0] == Lever.ENTITY_TYPE: # 3
             Lever(Vector((data[1], data[2])))
-        elif data[0] == Button.ENTITY_TYPE:
+        elif data[0] == Button.ENTITY_TYPE: # requires timer data
             Button(Vector((data[1], data[2])))
-        elif data[0] == Panel.ENTITY_TYPE:
+            Entity.entities[entity_index].set_timer(data[3])
+        elif data[0] == Panel.ENTITY_TYPE: # 5
             Panel(Vector((data[1], data[2])))
-        elif data[0] == LoosePanel.ENTITY_TYPE:
+        elif data[0] == LoosePanel.ENTITY_TYPE: # 6
             LoosePanel(Vector((data[1], data[2])))
-        elif data[0] == VerticalDoor.ENTITY_TYPE:
+        elif data[0] == VerticalDoor.ENTITY_TYPE: # 7
             VerticalDoor(Vector((data[1], data[2])))
+        elif data[0] == HorizontalDoor.ENTITY_TYPE: # 8
+            HorizontalDoor(Vector((data[1], data[2])))
+        elif data[0] == VerticalTimedDoor.ENTITY_TYPE: # 9 requires timer data
+            VerticalTimedDoor(Vector((data[1], data[2])))
+            Entity.entities[entity_index].set_timer(data[3])
+        elif data[0] == HorizontalTimedDoor.ENTITY_TYPE: # 10 requires timer data
+            HorizontalTimedDoor(Vector((data[1], data[2])))
+            Entity.entities[entity_index].set_timer(data[3])
+        elif data[0] == Scientist.ENTITY_TYPE: # 11 requires patrol point
+            Scientist(Vector((data[1], data[2])))
+            Entity.entities[entity_index].set_patrol(Vector((data[3], data[4])))
+        elif data[0] == MissileLauncher.ENTITY_TYPE: # requires range and fuse
+            MissileLauncher(Vector((data[1], data[2])))
+            Entity.entities[entity_index].set_range(data[3])
+            Entity.entities[entity_index].set_fuse(data[4])
 
+        entity_index += 1
 
     # retrieve contact data and set contacts
     for line in file:
@@ -202,11 +227,12 @@ def load_level(path):
             continue
         elif buffer == "CONTACTS_END":
             break
-
+            
         data = list_csv(buffer)
-        Entity.entities[data[0] - 1].set_contact(Entity.entities[data[1] - 1])
-        if len(data) == 3:
-            Entity.entities[data[0] - 1].set_timer(data[2])
+        if Entity.entities[data[0] - 1].ENTITY_TYPE != Button.ENTITY_TYPE:
+            Entity.entities[data[0] - 1].add_contact(Entity.entities[data[1] - 1])
+        else:
+            Entity.entities[data[0] - 1].set_contact(Entity.entities[data[1] - 1])
 
     # set player as camera anchor and store default map state
     game._game.camera.set_anchor(Entity.entities[0])
