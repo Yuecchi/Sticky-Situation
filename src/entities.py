@@ -457,6 +457,10 @@ class Player(Entity):
         def horizontal_timed_door(self, entity):
             return entity.open
 
+        def scientist(self, entity):
+            # TODO: may want to improve collision detection on scientists
+            self.kill()
+
         entities = {
             Player.ENTITY_TYPE              : player,
             PushBlock.ENTITY_TYPE           : push_block,
@@ -467,7 +471,8 @@ class Player(Entity):
             VerticalDoor.ENTITY_TYPE        : vertical_door,
             HorizontalDoor.ENTITY_TYPE      : horizontal_door,
             VerticalTimedDoor.ENTITY_TYPE   : vertical_timed_door,
-            HorizontalTimedDoor.ENTITY_TYPE : horizontal_timed_door
+            HorizontalTimedDoor.ENTITY_TYPE : horizontal_timed_door,
+            Scientist.ENTITY_TYPE           : scientist
         }
 
         return entities[entity.ENTITY_TYPE](self, entity)
@@ -645,7 +650,6 @@ class PushBlock(Entity):
         self.moving = False
         self.destination = self.pos
         self.direction = None
-        self.speed = Player.WALK_SPEED
 
     def check_current_tile(self, current_tile):
 
@@ -812,6 +816,9 @@ class PushBlock(Entity):
         def horizontal_timed_door(self, entity):
             return entity.open
 
+        def scientist(self, entity):
+            return False
+
         entities = {
             Player.ENTITY_TYPE               : player,
             PushBlock.ENTITY_TYPE            : push_block,
@@ -822,7 +829,8 @@ class PushBlock(Entity):
             VerticalDoor.ENTITY_TYPE         : vertical_door,
             HorizontalDoor.ENTITY_TYPE       : horizontal_door,
             VerticalTimedDoor.ENTITY_TYPE    : vertical_timed_door,
-            HorizontalTimedDoor.ENTITY_TYPE  : horizontal_timed_door
+            HorizontalTimedDoor.ENTITY_TYPE  : horizontal_timed_door,
+            Scientist.ENTITY_TYPE            : scientist
         }
 
         return entities[entity.ENTITY_TYPE](self, entity)
@@ -919,7 +927,6 @@ class Lever(Trigger):
         self.sprite = Sprite(self.img)
 
     def reset(self):
-
 
         self.pos = self.spawn
         self.dead = False
@@ -1267,7 +1274,7 @@ class Scientist(Entity):
 
     ENTITY_TYPE = 11
     SPRITESHEET = simplegui._load_local_image("../assets/scientist.png")
-    WALK_SPEED  = 1 / 32
+    WALK_SPEED  = 1 / 64
 
     def __init__(self, pos):
 
@@ -1276,7 +1283,7 @@ class Scientist(Entity):
         self.img = Scientist.SPRITESHEET
         self.sprite = Sprite(self.img)
 
-        self.patrol = Vector()
+        self.patrol_point = Vector()
 
         self.state = None
         self.moving = False
@@ -1314,18 +1321,22 @@ class Scientist(Entity):
         def walk_up(self):
             self.direction = Vector((0, -1))
             self.sprite.set_animation(([0, 3], [3, 3]), 15)
+            self.move(self.pos + self.direction)
 
         def walk_left(self):
             self.direction = Vector((-1, 0))
             self.sprite.set_animation(([0, 1], [3, 1]), 15)
+            self.move(self.pos + self.direction)
 
         def walk_down(self):
             self.direction = Vector((0, 1))
             self.sprite.set_animation(([0, 0], [3, 0]), 15)
+            self.move(self.pos + self.direction)
 
         def walk_right(self):
             self.direction = Vector((1, 0))
             self.sprite.set_animation(([0, 2], [3, 2]), 15)
+            self.move(self.pos + self.direction)
 
         states = {
 
@@ -1338,13 +1349,119 @@ class Scientist(Entity):
 
         states[state](self)
 
-    def move(self, newpos):
-        # need to do a whole load of bullshit
-        pass
+    def check_entity(self, entity): # player check entity method
+
+        def player(self, entity):
+            entity.kill()
+            return True
+
+        def push_block(self, entity):
+            self.change_direction()
+            return True
+
+        def lever(self, entity):
+            self.change_direction()
+            return True
+
+        def button(self, entity):
+            self.change_direction()
+            return True
+
+        def panel(self, entity):
+            self.change_direction()
+            return True
+
+        def loose_panel(self, entity):
+            self.change_direction()
+            return True
+
+        def vertical_door(self, entity):
+            if not entity.open:
+                self.change_direction()
+            return True
+
+        def horizontal_door(self, entity):
+            if not entity.open:
+                self.change_direction()
+            return True
+
+        def vertical_timed_door(self, entity):
+            if not entity.open:
+                self.change_direction()
+            return True
+
+        def horizontal_timed_door(self, entity):
+            if not entity.open:
+                self.change_direction()
+            return True
+
+        def scientist(self, entity):
+            self.change_direction()
+            return True
+
+        entities = {
+            Player.ENTITY_TYPE              : player,
+            PushBlock.ENTITY_TYPE           : push_block,
+            Lever.ENTITY_TYPE               : lever,
+            Button.ENTITY_TYPE              : button,
+            Panel.ENTITY_TYPE               : panel,
+            LoosePanel.ENTITY_TYPE          : loose_panel,
+            VerticalDoor.ENTITY_TYPE        : vertical_door,
+            HorizontalDoor.ENTITY_TYPE      : horizontal_door,
+            VerticalTimedDoor.ENTITY_TYPE   : vertical_timed_door,
+            HorizontalTimedDoor.ENTITY_TYPE : horizontal_timed_door,
+            Scientist.ENTITY_TYPE           : scientist
+        }
+
+        return entities[entity.ENTITY_TYPE](self, entity)
+
+    def reset(self):
+        self.pos = self.spawn
+        self.set_patrol(self.patrol)
+
+    def move(self, newpos): #scientist move
+        can_move = True
+        self.destination = newpos
+        # check if the move is within the boundaries of the map
+        if not self.in_bounds(self.destination):
+            self.destination = self.pos
+            return
+        # check destination tile
+        entity = get_entity(self.destination)
+        if entity:
+            can_move = self.check_entity(entity)
+
+        # if all checks are fine, move
+        if can_move:
+            self.moving = True
+        else:
+            self.moving = False # probably?
+            self.destination = self.pos
+
+    def update_entitymap_pos(self):
+        # move out of old location on entity map
+        oldpos = self.pos - self.direction
+        if game._game.level.entitymap[oldpos.y][oldpos.x] == self.id:
+            game._game.level.entitymap[oldpos.y][oldpos.x] = 0
+            self.distance = None
+        # move into new location on entity map
+        game._game.level.entitymap[self.pos.y][self.pos.x] = self.id
 
     def update(self):
-        # check if patrol point has been reached?
-        pass
+
+        if self.moving:
+            if self.pos != self.destination:
+                self.pos += (self.direction * self.speed)
+            else:
+                self.pos.to_int()
+                self.update_entitymap_pos()
+
+                if self.pos == self.patrol:
+                    self.change_direction()
+                elif self.pos == self.spawn:
+                    self.change_direction()
+                else:
+                    self.move(self.pos + self.direction)
 
 def get_entity(pos):
     entity_id = game._game.level.entitymap[pos.y][pos.x]

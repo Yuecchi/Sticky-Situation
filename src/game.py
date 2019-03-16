@@ -5,7 +5,6 @@ except ImportError:
 
 from enum import IntEnum
 from vectors import Vector
-import tileEngine
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
 import entities
@@ -198,7 +197,7 @@ lever3.add_contact(timed_door3)
 lever3.add_contact(timed_door4)
 
 scientist = Scientist(Vector((17, 16)))
-#scientist.set_patrol(Vector((25, 13)))
+scientist.set_patrol(Vector((17, 13)))
 
 temp = []
 for entity in Entity.entities:
