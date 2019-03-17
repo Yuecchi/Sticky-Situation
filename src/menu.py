@@ -66,14 +66,35 @@ class Option:
         else:
             canvas.draw_image(self.selected_img, self.half_dims, self.dims, self.pos.getP(), self.dims)
 
-unselected_img = simplegui._load_local_image("../assets/title_menu/start_button_unselected.png")
-selected_img = simplegui._load_local_image("../assets/title_menu//start_button_selected.png")
+# build menus to be used in the game
+unselected_img = simplegui._load_local_image("../assets/menus/title_menu/start_button_unselected.png")
+selected_img = simplegui._load_local_image("../assets/menus/title_menu//start_button_selected.png")
 option_start = Option(Vector((170, 400)), unselected_img, selected_img)
 
-unselected_img = simplegui._load_local_image("../assets/title_menu//quit_button_unselected.png")
-selected_img = simplegui._load_local_image("../assets/title_menu//quit_button_selected.png")
+unselected_img = simplegui._load_local_image("../assets/menus/title_menu/quit_button_unselected.png")
+selected_img = simplegui._load_local_image("../assets/menus/title_menu//quit_button_selected.png")
 option_quit = Option(Vector((460, 400)), unselected_img, selected_img)
 
 title_menu = Menu()
 title_menu.add_option(option_start)
 title_menu.add_option(option_quit)
+
+unselected_img = simplegui._load_local_image("../assets/menus/pause_menu/resume_button.png")
+selected_img   = unselected_img
+
+offset = 4
+
+option_resume = Option(Vector((109, 270)), unselected_img, selected_img)
+
+unselected_img = simplegui._load_local_image("../assets/menus/pause_menu/retry_button.png")
+selected_img   = unselected_img
+option_retry = Option(Vector((320, 270)), unselected_img, selected_img)
+
+unselected_img = simplegui._load_local_image("../assets/menus/pause_menu/quit_button.png")
+selected_img   = unselected_img
+option_quit = Option(Vector((530, 270)), unselected_img, selected_img)
+
+pause_menu = Menu()
+pause_menu.add_option(option_resume)
+pause_menu.add_option(option_retry)
+pause_menu.add_option(option_quit)

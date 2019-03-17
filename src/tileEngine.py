@@ -62,12 +62,14 @@ class Tile:
         src_pos = (HALFSIZE + (self.current_index[0] * TILESIZE), HALFSIZE +  (self.current_index[1] * TILESIZE))
         canvas.draw_image(self.img, src_pos, TILE_DIMS, pos, TILE_DIMS)
         # checks if this tile animation has already been updated
-        if not self.updated:
-            if self.animated:
-                if game._game.clock.transition(self.animation_speed):
-                    self.nextFrame()
-                    # sets the updated flag to true so avoid extra updates
-                    self.updated = True
+
+        if game._game.state != game.GameState.PAUSE:
+            if not self.updated:
+                if self.animated:
+                    if game._game.clock.transition(self.animation_speed):
+                        self.nextFrame()
+                        # sets the updated flag to true so avoid extra updates
+                        self.updated = True
 
     def nextFrame(self):
         if self.current_index == self.end_index:

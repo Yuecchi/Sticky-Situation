@@ -52,6 +52,7 @@ class GameState(IntEnum):
     TITLE     = 1
     GAME      = 2
     GAME_OVER = 3
+    PAUSE     = 4
 
 class StaticImage:
 
@@ -66,11 +67,14 @@ class StaticImage:
 
 class Game:
 
-    TITLE_BG_SRC = simplegui._load_local_image("../assets/title_menu//title_background.png")
+    TITLE_BG_SRC = simplegui._load_local_image("../assets/menus/title_menu/title_background.png")
     TITLE_BG = StaticImage(TITLE_BG_SRC)
 
     LIVES_ICON_SRC = simplegui._load_local_image("../assets/ui/lives_icon_16x16.png")
     LIVES_ICON = StaticImage(LIVES_ICON_SRC)
+
+    PAUSE_BG_SRC = simplegui._load_local_image("../assets/menus/pause_menu/pause_background.png")
+    PAUSE_BG = StaticImage(PAUSE_BG_SRC)
 
     def __init__(self):
 
@@ -82,6 +86,7 @@ class Game:
 
         self.mouse = handlers.mouse
         self.title_menu = menu.title_menu
+        self.pause_menu = menu.pause_menu
 
     def start(self):
         self.lives = 3
@@ -91,6 +96,21 @@ class Game:
     def initialize_title_menu(self):
         self.title_menu.options[0].set_action(self.start)
         self.title_menu.options[1].set_action(exit)
+
+    def unpause(self):
+        self.change_state(GameState.GAME)
+
+    def retry(self):
+        self.change_state(GameState.GAME)
+        Entity.entities[0].kill()
+
+    def back_to_title(self):
+        self.change_state(GameState.GAME_OVER)
+
+    def initialize_pause_menu(self):
+        self.pause_menu.options[0].set_action(self.unpause)
+        self.pause_menu.options[1].set_action(self.retry)
+        self.pause_menu.options[2].set_action(self.back_to_title)
 
     def change_state(self, state):
         self.state = state
@@ -136,6 +156,44 @@ class Game:
             canvas.draw_text("x " + str(self.lives), (32, 20), 16, "lime", "monospace")
             Game.LIVES_ICON.draw(canvas, (16, 16))
 
+            # pause functionality
+            if handlers.keyboard.p:
+                self.change_state(GameState.PAUSE)
+                handlers.keyboard.p = False
+
+            # game over
+            if self.state == GameState.GAME_OVER:
+                self.level = None
+                self.change_state(GameState.TITLE)
+                self.title_menu.options[0].selected = False
+
+        if self.state == GameState.PAUSE:
+
+            # check for pause menu interaction
+            self.pause_menu.update(self.mouse)
+
+            # if the game is paused, draw but don't update
+            self.level.tilemap.draw(canvas)
+
+            for entity in Entity.entity_drawing[::-1]:
+                entity.draw(canvas)
+
+            for projectile in Projectile.projectiles:
+                projectile.draw(canvas)
+
+            # display ui
+            canvas.draw_text("x " + str(self.lives), (32, 20), 16, "lime", "monospace")
+            Game.LIVES_ICON.draw(canvas, (16, 16))
+
+            #draw menu overlay
+            Game.PAUSE_BG.draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
+            self.pause_menu.display(canvas)
+
+            # unpause functionality
+            if handlers.keyboard.p:
+                self.change_state(GameState.GAME)
+                handlers.keyboard.p = False
+
             # game over
             if self.state == GameState.GAME_OVER:
                 self.level = None
@@ -152,9 +210,11 @@ class Game:
         """
 
         self.mouse.reset()
-        self.clock.tick()
+        if self.state != GameState.PAUSE:
+            self.clock.tick()
 
 _game = Game()
 _game.initialize_title_menu()
+_game.initialize_pause_menu()
 
 
