@@ -54,6 +54,8 @@ class GameState(IntEnum):
     GAME_OVER = 3
     PAUSE     = 4
     EDITOR    = 5
+    SANDBOX   = 6
+
 
 class StaticImage:
 
@@ -107,6 +109,13 @@ class Game:
 
     def launch_editor(self):
         self.change_state(GameState.EDITOR)
+
+    def launch_sandbox(self, level_name):
+        self.lives = 10
+        self.score = 0
+        self.time  = 999 * 60 #todo: temporary time setter for testing COPIED
+        level.load_level("../assets/levels/" + level_name + ".txt")
+        self.change_state(GameState.GAME)
 
     def initialize_title_menu(self):
         self.title_menu.options[0].set_action(self.start)

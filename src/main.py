@@ -10,7 +10,6 @@ import handlers
 import game
 
 def make_frame():
-
     # standard boilerplate code for creating a frame in simplgui
     frame = simplegui.create_frame("Sticky Situation", FRAMEWIDTH, FRAMEHEIGHT)
     frame.set_draw_handler(game._game.draw)
@@ -26,10 +25,11 @@ gotem = False
 while True:
 
     make_frame()
-    if not gotem:
-        import levelEditor
-        gotem = True
-    else:
-        importlib.reload(levelEditor)
+    if game._game.state == game.GameState.EDITOR:
+        if not gotem:
+            import levelEditor
+            gotem = True
+        else:
+            importlib.reload(levelEditor)
 
 

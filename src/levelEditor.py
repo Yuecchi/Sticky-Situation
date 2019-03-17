@@ -5,6 +5,7 @@ except ImportError:
 
 import game
 from game import _game
+import level
 from tileEngine import Tile
 from vectors import Vector
 
@@ -445,6 +446,26 @@ class LevelTileSheet:
                         current_row += " "
             current_row += "]"
             print(current_row)
+
+
+class Button:
+    def __init__(self, pos, size, value, action):
+        self.pos = pos
+        self.corners = [(pos[0], pos[1]),
+                        (pos[0] + size[0], pos[1]),
+                        (pos[0] + size[0], pos[1] + size[1]),
+                        (pos[0], pos[1] + size[1])]
+        self.value = value
+        self.action = action
+
+    def contains(self, pos):
+        return self.corners[0][0] <= pos[0] <= self.corners[2][0] and \
+               self.corners[0][1] <= pos[1] <= self.corners[2][1]
+
+    def draw(self, canvas):
+        canvas.draw_polygon(self.corners, 2, "Black", "Lime")
+        canvas.draw_text(self.value, (self.pos[0] + 30, self.pos[1] + 25), 20, "Black")
+
 
 class ToolBox:
     def __init__(self, pos, size, display_size=64):
@@ -895,6 +916,10 @@ class Input:
             if toolbar.entity is not None:
                 if toolbar.entity.extra is not None:
                     toolbar.extraButton.flip()
+        elif play.contains(pos):
+            play.action()
+        elif menu.contains(pos):
+            menu.action()
 
         contacted = False
         for contact in toolbar.list.contacts:
@@ -1288,8 +1313,16 @@ inputs = Input()
 load_level(level_name)
 
 
-def play(name=level_name):
-    pass
+def play():
+    game._game.launch_sandbox(level_name)
+    frame.stop()
+play = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 100), (100, 40), "Play", play)
+
+
+def menu():
+    game._game.launch_sandbox(level_name)
+    frame.stop()
+menu = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 50), (100, 40), "Menu", menu)
 
 
 def click(pos):
@@ -1311,6 +1344,8 @@ def draw(canvas):
         tile_grid.draw(canvas)
         entity_grid.draw(canvas)
         tools.draw(canvas)
+        play.draw(canvas)
+        menu.draw(canvas)
         if tools.entityState.state == 1 and tools.selectState.state == 1:
             toolbar.draw(canvas)
         _game.clock.tick()
