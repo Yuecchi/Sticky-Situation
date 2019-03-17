@@ -54,6 +54,7 @@ class GameState(IntEnum):
     GAME_OVER = 3
     PAUSE     = 4
     EDITOR    = 5
+    NEXT_LEVEL= 6
 
 class StaticImage:
 
@@ -106,7 +107,7 @@ class Game:
         self.lives = 3
         self.score = 0
         self.time  = 999 * 60 #todo: temporary time setter for testing
-        level.load_level("../assets/levels/justfun.txt")
+        level.load_level("../assets/levels/_level1.txt")
         self.change_state(GameState.GAME)
 
     def launch_editor(self):
@@ -275,7 +276,6 @@ def get_frame(f):
 
     global frame
     frame = f
-
 
 _game = Game()
 _game.initialize_title_menu()

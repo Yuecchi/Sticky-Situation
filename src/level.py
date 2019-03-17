@@ -31,6 +31,7 @@ class Level:
     def __init__(self, tilemap):
 
         self.tilemap = tilemap
+        self.next_level = None
 
         self.entitymap = [
             [
@@ -241,6 +242,9 @@ def load_level(path):
             Entity.entities[data[0] - 1].add_contact(Entity.entities[data[1] - 1])
         else:
             Entity.entities[data[0] - 1].set_contact(Entity.entities[data[1] - 1])
+
+    # store next level
+    level.next_level = file.readline().strip("\n")
 
     # set player as camera anchor and store default map state
     game._game.camera.set_anchor(Entity.entities[0])

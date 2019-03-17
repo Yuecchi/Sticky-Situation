@@ -1707,6 +1707,7 @@ class MissileLauncher(Entity):
 
     def set_range(self, range):
         self.range = range
+        self.range_sq = self.range * self.range
 
     def set_fuse(self, fuse):
         self.fuse = fuse
