@@ -98,6 +98,8 @@ class Game:
         self.title_menu = menu.title_menu
         self.pause_menu = menu.pause_menu
 
+        self.inSandbox = False
+
     def start(self):
         self.lives = 3
         self.score = 0
@@ -107,6 +109,14 @@ class Game:
 
     def launch_editor(self):
         self.change_state(GameState.EDITOR)
+
+    def launch_sandbox(self, level_name):
+        self.lives = 10
+        self.score = 0
+        self.time  = 999 * 60 #todo: temporary time setter for testing COPIED
+        level.load_level("../assets/levels/" + level_name + ".txt")
+        self.inSandbox = True
+        self.change_state(GameState.GAME)
 
     def initialize_title_menu(self):
         self.title_menu.options[0].set_action(self.start)
@@ -119,9 +129,6 @@ class Game:
     def retry(self):
         self.change_state(GameState.GAME)
         Entity.entities[0].kill()
-
-    def launch_sandbox(self, level_path):
-        level.load_level(level_path)
 
     def back_to_title(self):
         self.change_state(GameState.GAME_OVER)
@@ -194,8 +201,11 @@ class Game:
             # game over
             if self.state == GameState.GAME_OVER:
                 self.level = None
-                self.change_state(GameState.TITLE)
-                self.title_menu.options[0].selected = False
+                if self.inSandbox:
+                    self.inSandbox = False
+                    self.change_state(GameState.EDITOR)
+                else:
+                    self.change_state(GameState.TITLE)
 
         if self.state == GameState.PAUSE:
 
@@ -229,8 +239,11 @@ class Game:
             # game over
             if self.state == GameState.GAME_OVER:
                 self.level = None
-                self.change_state(GameState.TITLE)
-                self.title_menu.options[0].selected = False
+                if self.inSandbox:
+                    self.inSandbox = False
+                    self.change_state(GameState.EDITOR)
+                else:
+                    self.change_state(GameState.TITLE)
 
         if self.state == GameState.EDITOR:
             frame.stop()

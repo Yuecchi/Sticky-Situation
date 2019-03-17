@@ -10,7 +10,6 @@ import handlers
 import game
 
 def make_frame():
-
     # standard boilerplate code for creating a frame in simplgui
     frame = simplegui.create_frame("Sticky Situation", FRAMEWIDTH, FRAMEHEIGHT)
     frame.set_draw_handler(game._game.draw)
@@ -18,7 +17,10 @@ def make_frame():
     frame.set_keyup_handler(handlers.keyboard.keyup)
     frame.set_mouseclick_handler(handlers.mouse.mouseclick)
     game.get_frame(frame)
-    game._game.change_state(game.GameState.TITLE)
+
+    if game._game.state == game.GameState.EDITOR:
+        game._game.change_state(game.GameState.TITLE)
+
     frame.start()
 
 # THE WORLDS GREATEST HACK1!!
