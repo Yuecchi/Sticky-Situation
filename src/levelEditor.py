@@ -1315,11 +1315,13 @@ load_level(level_name)
 
 def play():
     game._game.launch_sandbox(level_name)
+    game._game.close = False
     frame.stop()
 play = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 100), (100, 40), "Play", play)
 
 
 def menu():
+    game._game.close = False
     frame.stop()
 menu = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 50), (100, 40), "Menu", menu)
 

@@ -28,11 +28,21 @@ gotem = False
 while True:
 
     make_frame()
+    if game._game.close:
+        break
+    else:
+        game._game.close = True
+
     if game._game.state == game.GameState.EDITOR:
         if not gotem:
             import levelEditor
             gotem = True
         else:
             importlib.reload(levelEditor)
+
+        if game._game.close:
+            break
+        else:
+            game._game.close = True
 
 

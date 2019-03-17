@@ -98,6 +98,8 @@ class Game:
         self.title_menu = menu.title_menu
         self.pause_menu = menu.pause_menu
 
+        self.close = True
+
         self.inSandbox = False
 
     def start(self):
@@ -246,7 +248,9 @@ class Game:
                     self.change_state(GameState.TITLE)
 
         if self.state == GameState.EDITOR:
+            self.close = False
             frame.stop()
+
 
         """
         canvas.draw_text("player position: " + str(player.pos), (0, 16), 16, "White")
