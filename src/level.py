@@ -135,7 +135,7 @@ def list_csv(buffer):
 def load_level(path):
 
     # create an empty list to store the three indexes
-    index = []
+    # index = []
 
     # open the tilesheet file
     file = open(path, "rt")
@@ -178,6 +178,11 @@ def load_level(path):
 
     # load entities
     Entity.entities = []
+    Entity.next_id = 1
+
+    Entity.entity_updates = []
+    Entity.entity_drawing = []
+    Entity.entity_moveable = []
 
     # retrieve entity data and create entities
     entity_index = 0

@@ -705,10 +705,15 @@ class Player(Entity):
                     self.destination = self.pos
         else:
 
+
             if self.respawn_time > 0:
                 self.respawn_time -= 1
             else:
-                self.respawn()
+                if game._game.lives > 0:
+                    game._game.lives -= 1
+                    self.respawn()
+                else:
+                    game._game.change_state(game.GameState.GAME_OVER)
 
 class PushBlock(Entity):
 
