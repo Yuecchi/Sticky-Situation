@@ -705,7 +705,6 @@ class Player(Entity):
                     self.destination = self.pos
         else:
 
-
             if self.respawn_time > 0:
                 self.respawn_time -= 1
             else:
@@ -739,6 +738,8 @@ class PushBlock(Entity):
         self.dont_draw = False
 
         self.moving = False
+        self.stuck = False
+        self.sprite.set_animation(([0, 0], [0, 0]), 1)
         self.destination = self.pos
         self.direction = None
 
@@ -796,6 +797,7 @@ class PushBlock(Entity):
 
         def tile_glue(self):
             self.stuck = True
+            self.sprite.set_animation(([1, 0], [1, 0]), 1)
             pass
 
         def tile_fire(self):

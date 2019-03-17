@@ -53,6 +53,7 @@ class GameState(IntEnum):
     GAME      = 2
     GAME_OVER = 3
     PAUSE     = 4
+    EDITOR    = 5
 
 class StaticImage:
 
@@ -76,13 +77,22 @@ class Game:
     PAUSE_BG_SRC = simplegui._load_local_image("../assets/menus/pause_menu/pause_background.png")
     PAUSE_BG = StaticImage(PAUSE_BG_SRC)
 
+    DEATH_IMG_SRC = simplegui._load_local_image('../assets/ui/death.png')
+    DEATH_IMG = StaticImage(DEATH_IMG_SRC)
+
+    GAME_OVER_IMG_SRC = simplegui._load_local_image('../assets/ui/game_over.png')
+    GAME_OVER_IMG = StaticImage(GAME_OVER_IMG_SRC)
+
     def __init__(self):
 
         self.state = GameState.TITLE
         self.level = None
         self.clock = Clock()
         self.camera = Camera()
-        self.lives = None
+
+        self.lives = 0
+        self.score = 0
+        self.time  = 0 # time will be loaded from level I guess
 
         self.mouse = handlers.mouse
         self.title_menu = menu.title_menu
@@ -90,12 +100,18 @@ class Game:
 
     def start(self):
         self.lives = 3
+        self.score = 0
+        self.time  = 999 * 60 #todo: temporary time setter for testing
         level.load_level("../assets/levels/elliot.txt")
         self.change_state(GameState.GAME)
 
+    def launch_editor(self):
+        self.change_state(GameState.EDITOR)
+
     def initialize_title_menu(self):
         self.title_menu.options[0].set_action(self.start)
-        self.title_menu.options[1].set_action(exit)
+        self.title_menu.options[1].set_action(self.launch_editor) #todo: goto editor
+        self.title_menu.options[2].set_action(exit)
 
     def unpause(self):
         self.change_state(GameState.GAME)
@@ -154,7 +170,16 @@ class Game:
 
             # display ui
             canvas.draw_text("x " + str(self.lives), (32, 20), 16, "lime", "monospace")
+            canvas.draw_text("score: " + str(self.score), (280, 20), 16, "lime", "monospace")
+            canvas.draw_text("time: " + str(self.time // 60), (520, 20), 16, "lime", "monospace")
             Game.LIVES_ICON.draw(canvas, (16, 16))
+
+            # draw death overlay when neeeded
+            if Entity.entities[0].dead:
+                if self.lives > 0:
+                    Game.DEATH_IMG.draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
+                else:
+                    Game.GAME_OVER_IMG.draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
 
             # pause functionality
             if handlers.keyboard.p:
@@ -182,6 +207,8 @@ class Game:
                 projectile.draw(canvas)
 
             # display ui
+            #todo: will need to change shit here that happens up there
+            # turns out being lazy before creates more work now...WHO KNEW!??
             canvas.draw_text("x " + str(self.lives), (32, 20), 16, "lime", "monospace")
             Game.LIVES_ICON.draw(canvas, (16, 16))
 
@@ -199,6 +226,10 @@ class Game:
                 self.level = None
                 self.change_state(GameState.TITLE)
                 self.title_menu.options[0].selected = False
+
+        if self.state == GameState.EDITOR:
+            # initialize editor
+            pass
         """
         canvas.draw_text("player position: " + str(player.pos), (0, 16), 16, "White")
         canvas.draw_text("player direction: " + str(player.direction), (0, 32), 16, "White")
@@ -212,9 +243,26 @@ class Game:
         self.mouse.reset()
         if self.state != GameState.PAUSE:
             self.clock.tick()
+            if self.time > 0:
+                self.time -= 1
 
 _game = Game()
 _game.initialize_title_menu()
 _game.initialize_pause_menu()
 
+"""
+CANVAS_DIMS = [900, 600]
+editor_frame = simplegui.create_frame("LevelEditor", CANVAS_DIMS[0], CANVAS_DIMS[1])
 
+editor_frame.set_mouseclick_handler(levelEditor.click)
+editor_frame.set_keydown_handler(levelEditor.key_down)
+editor_frame.set_mousedrag_handler(levelEditor.drag)
+
+impFile = editor_frame.add_input("Load: Level Name", levelEditor.load, 100)
+expFile = editor_frame.add_input("Save: Level Name", levelEditor.save, 100)
+
+changeDims = editor_frame.add_input("Resize: (Width, Height)", levelEditor.resize, 100)
+addTimer = editor_frame.add_input("Add Timer: Time (s)", levelEditor.add_timer, 100)
+
+editor_frame.set_draw_handler(levelEditor.draw)
+"""

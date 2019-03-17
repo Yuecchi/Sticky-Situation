@@ -35,6 +35,7 @@ class TileType(IntEnum):
     WATER          = 16
     LASER          = 17
     GHOST          = 18
+    GOAL           = 19
 
 class Tile:
 

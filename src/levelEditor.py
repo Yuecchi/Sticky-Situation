@@ -2,6 +2,7 @@ try:
     import simplegui
 except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
+
 from game import _game
 from tileEngine import Tile
 from vectors import Vector
@@ -28,7 +29,7 @@ ENTITY_TIMER = [None, None, None, None, 5, None, None, None, None, 5, 5, None, 5
 ENTITY_TARGET = [False, False, False, False, False, True, False, True, True, True, True, False, False]
 ENTITY_OTHER = [None, None, None, None, None, None, None, None, None, None, None, [0, 0], [3]]
 
-level_name = "elliot"
+level_name = "default"
 level_loaded = False
 
 class SquareTile:
@@ -1389,7 +1390,6 @@ def key_down(key):
 # TODO: Add rocket range and fuse
 
 # TODO: Add button to "Play"
-
 
 frame = simplegui.create_frame("LevelEditor", CANVAS_DIMS[0], CANVAS_DIMS[1])
 
