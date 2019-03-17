@@ -97,6 +97,8 @@ class FakeEntity:
         self.pos = new_pos
 
     def __eq__(self, other):
+        if other is None:
+            return False
         return self.pos == other.pos and self.type == other.type
 
     def remove(self):
@@ -1120,11 +1122,13 @@ def init_entity_grid():
 
 
 def save(name):
+    global level_name
     if len(name) == 0:
         return
     if name[0] == "_":  # If it starts with an underscore, it's a in-built level, can't be replaced
         return
 
+    level_name = name
     file = open("../assets/levels/" + name + ".txt", "wt+")
     expFile.set_text("")
     # write tilesheet path
