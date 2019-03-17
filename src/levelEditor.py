@@ -4,7 +4,6 @@ except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
 
 import game
-from game import _game
 import level
 from tileEngine import Tile
 from vectors import Vector
@@ -30,8 +29,11 @@ ENTITY_TRIGGER = [False, False, False, True, True, True, True, False, False, Fal
 ENTITY_TIMER = [None, None, None, None, 5, None, None, None, None, 5, 5, None, 5]
 ENTITY_TARGET = [False, False, False, False, False, True, False, True, True, True, True, False, False]
 ENTITY_OTHER = [None, None, None, None, None, None, None, None, None, None, None, [0, 0], [3]]
+TILE_TYPE = ["EMPTY", "SOLID", "ICY", "LEFT_FENCE", "RIGHT_FENCE", "CONVEYOR_UP", "CONVEYOR_LEFT",
+             "CONVEYOR_DOWN", "CONVEYOR_RIGHT", "SPIKES", "OPEN_PIT", "CLOSED_PIT", "GLUE", "UP_FENCE",
+             "FIRE", "FAN", "WATER", "LASER", "GHOST", "GOAL"]
 
-level_name = "default"
+level_name = "_default"
 level_loaded = False
 
 class SquareTile:
@@ -348,7 +350,7 @@ class LevelTileSheet:
                 for j in range(self.index[index_i][0]):
                     col = (start_index[0] + j) % self.cols
                     row = start_index[1] + ((start_index[0] + j) // self.cols)
-                    # TODO: Case where animation split by big tile
+                    # CASE NOT NEEDED: Case where animation split by big tile __________________________________________
                     # THIS SHOULD NEVER HAPPEN BUT JUST IN CASE
                     # only do this if not already -1, otherwise while -1, make tile, increment
                     # the original i should be stored though, for finishing the animation
@@ -429,11 +431,13 @@ class LevelTileSheet:
             index_i += 1
 
         # Pass through all tiles and assign animation speed
-        for tile_id in range(len(self.tiles)):
-            if tile_id < len(self.animation_index):  # If it has an animation speed (a.k.a not big tile)
-                self.tiles[tile_id].animation_speed = self.animation_index[tile_id]
+        for tile_i in range(len(self.tiles)):
+            if tile_i < len(self.animation_index):  # If it has an animation speed (a.k.a not big tile)
+                self.tiles[tile_i].animation_speed = self.animation_index[tile_i]
+                self.tiles[tile_i].type = self.tile_index[tile_i]
             else:
-                self.tiles[tile_id].animation_speed = 1
+                self.tiles[tile_i].animation_speed = 1
+                self.tiles[tile_i].type = -1
 
 
     def printGrid(self):
@@ -495,6 +499,10 @@ class ToolBox:
                                     ("Editing", "Managing Entities"),
                                     (55, 140))
         self.selectState.disabled = True
+        self.pickState = StateBox((pos[0] + 330, pos[1] + 5),
+                                  (150, 40),
+                                  ("Painting", "Picking"),
+                                  (60, 55))
         self.entityState = StateBox((pos[0] + 580, pos[1] + 10),
                                     (105, 80),
                                     ("Tile Mode", "Entity Mode"),
@@ -504,6 +512,13 @@ class ToolBox:
 
     def draw(self, canvas):
         canvas.draw_polygon(self.corners, 2, "Black", "Cyan")
+        display = "NOTHING"
+        if self.displayBox.tileNo != -1:
+            if inputs.tile_sheet.tiles[self.displayBox.tileNo].type == -1:
+                display = "BIG_TILE"
+            else:
+                display = TILE_TYPE[inputs.tile_sheet.tiles[self.displayBox.tileNo].type]
+        canvas.draw_text("Type: " + display, (self.pos[0] + 327, self.pos[1] + 80), 15, "Black")
         canvas.draw_text("Brush", (self.pos[0] + 510, self.pos[1] + 30), 25, "Black")
         OFFSET = 16
         canvas.draw_polygon(((self.displayBox.x - OFFSET, self.displayBox.y - OFFSET),
@@ -535,6 +550,7 @@ class ToolBox:
         self.bigState.draw(canvas)
         self.selectState.draw(canvas)
         self.entityState.draw(canvas)
+        self.pickState.draw(canvas)
 
 
 class StateBox:
@@ -819,13 +835,19 @@ class Input:
 
     def click(self, pos):
         if level_tile_grid.contains(pos):
-            if tools.fillState.state == 1:  # Start and end selections
-                self.selectStart = level_tile_grid.get_selected(pos, False)
-                tools.fillState.next()
-            elif tools.fillState.state == 2:
-                self.selectEnd = level_tile_grid.get_selected(pos, False)
-                tools.fillState.next()
-            self.set_colour(pos)  # Paint cells after
+            if tools.pickState.state != 1:
+                if tools.fillState.state == 1:  # Start and end selections
+                    self.selectStart = level_tile_grid.get_selected(pos, False)
+                    tools.fillState.next()
+                elif tools.fillState.state == 2:
+                    self.selectEnd = level_tile_grid.get_selected(pos, False)
+                    tools.fillState.next()
+                self.set_colour(pos)  # Paint cells after
+            else:  # If picking
+                self.brush = level_tile_grid.get_selected(pos).tileNo
+                tools.displayBox.paint(self.brush)
+                print(self.brush)
+                self.fill()
         elif level_entity_grid.contains(pos):
             if tools.selectState.state == 1:  # If we are selecting entities
                 if toolbar.entity is not None and toolbar.extraButton.state == 1:  # If we are assigning extra values
@@ -876,24 +898,7 @@ class Input:
                     self.brush = tile_grid.map[selected_tile[0]][selected_tile[1]]
             tools.displayBox.paint(self.brush)
             print(self.brush)
-            if tools.fillState.state == 3:  # If filling
-                if isinstance(self.tile_sheet.tiles[self.brush], BigTile):
-                    big_in_use = self.tile_sheet.tiles[self.brush]
-                    selected = level_tile_grid.in_selection(self.selectStart, self.selectEnd, True)
-                    for dy in range((selected[1][0]-selected[0][0]+1)//len(big_in_use.tiles)):
-                        sy = dy*len(big_in_use.tiles) + selected[0][0]
-                        for dx in range((selected[1][1] - selected[0][1]+1)//len(big_in_use.tiles[0])):
-                            selected_index = [sy, dx * len(big_in_use.tiles[0]) + selected[0][1]]
-                            for y in range(len(big_in_use.tiles)):  # Draws the tile
-                                for x in range(len(big_in_use.tiles[0])):
-                                    if x + selected_index[1] < level_tile_grid.cols and y + selected_index[0] < level_tile_grid.rows:
-                                        level_tile_grid.tiles[y + selected_index[0]][x + selected_index[1]].paint(
-                                            big_in_use.tiles[y][x])
-                else:
-                    selected = level_tile_grid.in_selection(self.selectStart, self.selectEnd)
-                    for tile in selected:
-                        tile.paint(self.brush)
-                tools.fillState.next()
+            self.fill()
         elif tools.bigState.contains(pos):
             tools.bigState.flip()
         elif tools.panState.contains(pos):
@@ -918,10 +923,12 @@ class Input:
             if toolbar.entity is not None:
                 if toolbar.entity.extra is not None:
                     toolbar.extraButton.flip()
-        elif play.contains(pos):
-            play.action()
-        elif menu.contains(pos):
-            menu.action()
+        elif play_button.contains(pos):
+            play_button.action()
+        elif menu_button.contains(pos):
+            menu_button.action()
+        elif tools.pickState.contains(pos):
+            tools.pickState.flip()
 
         contacted = False
         for contact in toolbar.list.contacts:
@@ -993,7 +1000,28 @@ class Input:
         tools.bigState.disabled = not tools.bigState.disabled
         tools.selectState.disabled = not tools.selectState.disabled
         tools.panState.disabled = not tools.panState.disabled
+        tools.pickState.disabled = not tools.pickState.disabled
 
+    def fill(self):
+        if tools.fillState.state == 3:  # If filling
+            if isinstance(self.tile_sheet.tiles[self.brush], BigTile):
+                big_in_use = self.tile_sheet.tiles[self.brush]
+                selected = level_tile_grid.in_selection(self.selectStart, self.selectEnd, True)
+                for dy in range((selected[1][0] - selected[0][0] + 1) // len(big_in_use.tiles)):
+                    sy = dy * len(big_in_use.tiles) + selected[0][0]
+                    for dx in range((selected[1][1] - selected[0][1] + 1) // len(big_in_use.tiles[0])):
+                        selected_index = [sy, dx * len(big_in_use.tiles[0]) + selected[0][1]]
+                        for y in range(len(big_in_use.tiles)):  # Draws the tile
+                            for x in range(len(big_in_use.tiles[0])):
+                                if x + selected_index[1] < level_tile_grid.cols and y + selected_index[0] \
+                                        < level_tile_grid.rows:
+                                    level_tile_grid.tiles[y + selected_index[0]][x + selected_index[1]].paint(
+                                        big_in_use.tiles[y][x])
+            else:
+                selected = level_tile_grid.in_selection(self.selectStart, self.selectEnd)
+                for tile in selected:
+                    tile.paint(self.brush)
+            tools.fillState.next()
 
 def init_tile_grid():
     global tile_grid
@@ -1119,6 +1147,13 @@ def init_entity_grid():
         if current_index[1] >= entity_grid.rows:
             print("Couldn't fill all entities")
             return
+
+
+def i_save():
+    name = level_name
+    if name[0] == '_':
+        name = name[1:]
+    save(name)
 
 
 def save(name):
@@ -1321,13 +1356,13 @@ def play():
     game._game.launch_sandbox(level_name)
     game._game.close = False
     frame.stop()
-play = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 100), (100, 40), "Play", play)
+play_button = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 100), (100, 40), "Play", play)
 
 
 def menu():
     game._game.close = False
     frame.stop()
-menu = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 50), (100, 40), "Menu", menu)
+menu_button = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 50), (100, 40), "Menu", menu)
 
 
 def click(pos):
@@ -1349,13 +1384,15 @@ def draw(canvas):
         tile_grid.draw(canvas)
         entity_grid.draw(canvas)
         tools.draw(canvas)
-        play.draw(canvas)
-        menu.draw(canvas)
+        play_button.draw(canvas)
+        menu_button.draw(canvas)
+        canvas.draw_text("WASD to scroll", (50, 40), 15, "White")
+        canvas.draw_text("Arrow Keys to scroll", (350, 40), 15, "White")
         if tools.entityState.state == 1 and tools.selectState.state == 1:
             toolbar.draw(canvas)
-        _game.clock.tick()
+        game._game.clock.tick()
     else:
-        _game.clock.reset()
+        game._game.clock.reset()
 
 def load(name):
     load_level(name)
@@ -1418,17 +1455,11 @@ def key_down(key):
             tile_grid.move_frame(tile_grid.frame[0], 0)
         else:
             tile_grid.move_frame(1, 0)
+    elif key == simplegui.KEY_MAP['i']:  # Hotkey for immediate save
+        i_save()
+    elif key == simplegui.KEY_MAP['p']:  # Hotkey to play level
+        play()
 
-
-# TODO: Use vectors for positioning
-# TODO: Perhaps make tabs for different types of tiles
-# TODO: Add button for level handling using PySimplegui
-# TODO: Add 'undo' function
-
-# TODO: Add scientist destination
-# TODO: Add rocket range and fuse
-
-# TODO: Add button to "Play"
 
 frame = simplegui.create_frame("LevelEditor", CANVAS_DIMS[0], CANVAS_DIMS[1])
 
