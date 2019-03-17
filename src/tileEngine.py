@@ -279,3 +279,4 @@ def load_tilemap(path):
     # create a new tilemap and return it
     tilemap = Tilemap(tilesheet, map)
     return tilemap
+

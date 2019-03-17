@@ -137,6 +137,8 @@ class Game:
 
     def draw(self, canvas):
 
+        global frame
+
         if self.state == GameState.TITLE:
 
             # display tile screen background image
@@ -228,8 +230,8 @@ class Game:
                 self.title_menu.options[0].selected = False
 
         if self.state == GameState.EDITOR:
-            # initialize editor
-            pass
+            frame.stop()
+
         """
         canvas.draw_text("player position: " + str(player.pos), (0, 16), 16, "White")
         canvas.draw_text("player direction: " + str(player.direction), (0, 32), 16, "White")
@@ -246,23 +248,18 @@ class Game:
             if self.time > 0:
                 self.time -= 1
 
+# FUCK YEAH
+editor_frame = None
+frame = None
+def get_frame(f):
+
+    global frame
+    frame = f
+
+
 _game = Game()
 _game.initialize_title_menu()
 _game.initialize_pause_menu()
 
-"""
-CANVAS_DIMS = [900, 600]
-editor_frame = simplegui.create_frame("LevelEditor", CANVAS_DIMS[0], CANVAS_DIMS[1])
 
-editor_frame.set_mouseclick_handler(levelEditor.click)
-editor_frame.set_keydown_handler(levelEditor.key_down)
-editor_frame.set_mousedrag_handler(levelEditor.drag)
 
-impFile = editor_frame.add_input("Load: Level Name", levelEditor.load, 100)
-expFile = editor_frame.add_input("Save: Level Name", levelEditor.save, 100)
-
-changeDims = editor_frame.add_input("Resize: (Width, Height)", levelEditor.resize, 100)
-addTimer = editor_frame.add_input("Add Timer: Time (s)", levelEditor.add_timer, 100)
-
-editor_frame.set_draw_handler(levelEditor.draw)
-"""

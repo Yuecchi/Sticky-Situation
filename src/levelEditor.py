@@ -3,6 +3,7 @@ try:
 except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
 
+import game
 from game import _game
 from tileEngine import Tile
 from vectors import Vector
@@ -72,7 +73,6 @@ class SquareTile:
             else:
                 pos = ((TILE_SIZE/2) + self.x, (TILE_SIZE/2) + self.y)
                 canvas.draw_image(ENTITY_IMG, ENTITY_SRC_POS[self.tileNo], (TILE_SIZE, TILE_SIZE), pos, (TILE_SIZE, TILE_SIZE))
-
 
 class FakeEntity:
     def __init__(self, pos, type, time_in=-1, extra=[]):
@@ -1317,7 +1317,6 @@ def draw(canvas):
     else:
         _game.clock.reset()
 
-
 def load(name):
     load_level(name)
     impFile.set_text("")
@@ -1404,5 +1403,4 @@ changeDims = frame.add_input("Resize: (Width, Height)", resize, 100)
 addTimer = frame.add_input("Add Timer: Time (s)", add_timer, 100)
 
 frame.set_draw_handler(draw)
-
 frame.start()
