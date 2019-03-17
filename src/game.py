@@ -49,12 +49,12 @@ class Clock:
 
 class GameState(IntEnum):
 
-    TITLE     = 1
-    GAME      = 2
-    GAME_OVER = 3
-    PAUSE     = 4
-    EDITOR    = 5
-    NEXT_LEVEL= 6
+    TITLE          = 1
+    GAME           = 2
+    GAME_OVER      = 3
+    PAUSE          = 4
+    EDITOR         = 5
+    LEVEL_COMPLETE = 6
 
 class StaticImage:
 
@@ -104,11 +104,24 @@ class Game:
         self.inSandbox = False
 
     def start(self):
-        self.lives = 3
+        self.lives = 10
         self.score = 0
-        self.time  = 999 * 60 #todo: temporary time setter for testing
+        self.time  = 300 * 60 #todo: temporary time setter for testing
         level.load_level("../assets/levels/_level1.txt")
         self.change_state(GameState.GAME)
+
+    def next_level(self):
+        self.score += (self.time // 60)
+        self.time = 300 * 60
+
+        if self.inSandbox:
+            self.inSandbox = False
+            self.change_state(GameState.EDITOR)
+        elif self.level.next_level == '':
+            self.change_state(GameState.TITLE)
+        else:
+            level.load_level(self.level.next_level)
+            self.change_state(GameState.GAME)
 
     def launch_editor(self):
         self.change_state(GameState.EDITOR)
@@ -116,14 +129,14 @@ class Game:
     def launch_sandbox(self, level_name):
         self.lives = 10
         self.score = 0
-        self.time  = 999 * 60 #todo: temporary time setter for testing COPIED
+        self.time  = 300 * 60 #todo: temporary time setter for testing COPIED
         level.load_level("../assets/levels/" + level_name + ".txt")
         self.inSandbox = True
         self.change_state(GameState.GAME)
 
     def initialize_title_menu(self):
         self.title_menu.options[0].set_action(self.start)
-        self.title_menu.options[1].set_action(self.launch_editor) #todo: goto editor
+        self.title_menu.options[1].set_action(self.launch_editor)
         self.title_menu.options[2].set_action(exit)
 
     def unpause(self):
@@ -251,6 +264,10 @@ class Game:
         if self.state == GameState.EDITOR:
             self.close = False
             frame.stop()
+
+        # level complete
+        if self.state == GameState.LEVEL_COMPLETE:
+            self.next_level()
 
 
         """

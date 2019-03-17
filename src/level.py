@@ -245,10 +245,12 @@ def load_level(path):
 
     # store next level
     level.next_level = file.readline().strip("\n")
+    print(level.next_level)
 
     # set player as camera anchor and store default map state
     game._game.camera.set_anchor(Entity.entities[0])
     game._game.level.store_reset_maps()
+
 
     # create specific entity order for updates and drawing
     temp = []

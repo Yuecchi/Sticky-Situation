@@ -334,6 +334,9 @@ class Player(Entity):
         def tile_ghost(self):
             self.kill()
 
+        def tile_goal(self):
+            game._game.change_state(game.GameState.LEVEL_COMPLETE)
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -353,7 +356,8 @@ class Player(Entity):
             TileType.FAN            : tile_fan,
             TileType.WATER          : tile_water,
             TileType.LASER          : tile_laser,
-            TileType.GHOST          : tile_ghost
+            TileType.GHOST          : tile_ghost,
+            TileType.GOAL           : tile_goal
         }
 
         tiles[current_tile.type](self)
@@ -476,6 +480,9 @@ class Player(Entity):
         def tile_ghost(self, current_tile, destination_tile):
             return True
 
+        def tile_goal(self, current_tile, destination_tile):
+            return True
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -495,7 +502,8 @@ class Player(Entity):
             TileType.FAN            : tile_fan,
             TileType.WATER          : tile_water,
             TileType.LASER          : tile_laser,
-            TileType.GHOST          : tile_ghost
+            TileType.GHOST          : tile_ghost,
+            TileType.GOAL           : tile_goal
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
@@ -815,6 +823,9 @@ class PushBlock(Entity):
         def tile_ghost(self):
             pass
 
+        def tile_goal(self):
+            pass
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -834,7 +845,8 @@ class PushBlock(Entity):
             TileType.FAN            : tile_fan,
             TileType.WATER          : tile_water,
             TileType.LASER          : tile_laser,
-            TileType.GHOST          : tile_ghost
+            TileType.GHOST          : tile_ghost,
+            TileType.GOAL           : tile_goal
         }
 
         tiles[current_tile.type](self)
@@ -898,6 +910,10 @@ class PushBlock(Entity):
         def tile_ghost(self, current_tile, destination_tile):
             return False
 
+        def tile_goal(self, current_tile, destination_tile):
+            return False
+
+
         tiles = {
             TileType.EMPTY          : tile_empty,
             TileType.SOLID          : tile_solid,
@@ -917,7 +933,8 @@ class PushBlock(Entity):
             TileType.FAN            : tile_fan,
             TileType.WATER          : tile_water,
             TileType.LASER          : tile_laser,
-            TileType.GHOST          : tile_ghost
+            TileType.GHOST          : tile_ghost,
+            TileType.GOAL           : tile_goal
         }
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
