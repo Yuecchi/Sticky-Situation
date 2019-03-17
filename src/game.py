@@ -102,7 +102,7 @@ class Game:
         self.lives = 3
         self.score = 0
         self.time  = 999 * 60 #todo: temporary time setter for testing
-        level.load_level("../assets/levels/elliot.txt")
+        level.load_level("../assets/levels/justfun.txt")
         self.change_state(GameState.GAME)
 
     def launch_editor(self):
@@ -119,6 +119,9 @@ class Game:
     def retry(self):
         self.change_state(GameState.GAME)
         Entity.entities[0].kill()
+
+    def launch_sandbox(self, level_path):
+        level.load_level(level_path)
 
     def back_to_title(self):
         self.change_state(GameState.GAME_OVER)
