@@ -154,7 +154,7 @@ class Player(Entity):
     ENTITY_TYPE = 1
     WALK_SPEED  = 1 / 32
     DEFAULT_STATE = PlayerState.IDLE_DOWN
-    SPRITESHEET = simplegui._load_local_image('../assets/SS_Horse_1.1.png')
+    SPRITESHEET = simplegui._load_local_image('../assets/entities/horse.png')
 
     def __init__(self, pos):
 
@@ -713,7 +713,7 @@ class Player(Entity):
 class PushBlock(Entity):
 
     ENTITY_TYPE = 2
-    SPRITESHEET = simplegui._load_local_image('../assets/testblock.png')
+    SPRITESHEET = simplegui._load_local_image('../assets/entities/pushblock.png')
 
     def __init__(self, pos):
 
@@ -1054,7 +1054,7 @@ class Trigger(Entity):
 class Lever(Trigger):
 
     ENTITY_TYPE = 3
-    SPRITESHEET = simplegui._load_local_image('../assets/lever.png')
+    SPRITESHEET = simplegui._load_local_image('../assets/entities/triggers/lever.png')
 
     def __init__(self, pos):
 
@@ -1108,7 +1108,7 @@ class Lever(Trigger):
 class Button(Trigger):
 
     ENTITY_TYPE = 4
-    SPRITESHEET = simplegui._load_local_image('../assets/button.png')
+    SPRITESHEET = simplegui._load_local_image('../assets/entities/triggers/button.png')
 
     def  __init__(self, pos):
 
@@ -1166,7 +1166,7 @@ class Button(Trigger):
 class Panel(Trigger):
 
     ENTITY_TYPE = 5
-    SPRITESHEET = simplegui._load_local_image('../assets/panel.png')
+    SPRITESHEET = simplegui._load_local_image('../assets/entities/triggers/panel.png')
 
     def __init__(self, pos):
 
@@ -1235,7 +1235,7 @@ class Panel(Trigger):
 class LoosePanel(Trigger):
 
     ENTITY_TYPE = 6
-    SPRITESHEET = simplegui._load_local_image('../assets/loose_panel.png')
+    SPRITESHEET = simplegui._load_local_image('../assets/entities/triggers/loose_panel.png')
 
     def __init__(self, pos):
 
@@ -1334,7 +1334,7 @@ class Door(Entity):
 class VerticalDoor(Door):
 
     ENTITY_TYPE = 7
-    SPRITESHEET = simplegui._load_local_image('../assets/vert_door.png')
+    SPRITESHEET = simplegui._load_local_image('../assets/entities/doors/vert_door.png')
 
     def __init__(self, pos):
 
@@ -1347,7 +1347,7 @@ class VerticalDoor(Door):
 class HorizontalDoor(Door):
 
     ENTITY_TYPE = 8
-    SPRITESHEET = simplegui._load_local_image('../assets/hori_door.png')
+    SPRITESHEET = simplegui._load_local_image('../assets/entities/doors/hori_door.png')
 
     def __init__(self, pos):
 
@@ -1360,7 +1360,7 @@ class HorizontalDoor(Door):
 class VerticalTimedDoor(Door):
 
     ENTITY_TYPE = 9
-    SPRITESHEET = simplegui._load_local_image("../assets/vert_timed_door.png")
+    SPRITESHEET = simplegui._load_local_image("../assets/entities/doors/vert_timed_door.png")
 
     def __init__(self, pos):
 
@@ -1414,7 +1414,7 @@ class VerticalTimedDoor(Door):
 class HorizontalTimedDoor(Door):
 
     ENTITY_TYPE = 10
-    SPRITESHEET = simplegui._load_local_image("../assets/hori_timed_door.png")
+    SPRITESHEET = simplegui._load_local_image("../assets/entities/doors/hori_timed_door.png")
 
     def __init__(self, pos):
 
@@ -1476,7 +1476,7 @@ class ScientistState(IntEnum):
 class Scientist(Entity):
 
     ENTITY_TYPE = 11
-    SPRITESHEET = simplegui._load_local_image("../assets/scientist.png")
+    SPRITESHEET = simplegui._load_local_image("../assets/entities/scientist.png")
     WALK_SPEED  = 1 / 64
 
     def __init__(self, pos):
@@ -1678,7 +1678,7 @@ class Scientist(Entity):
 class MissileLauncher(Entity):
 
     ENTITY_TYPE = 12
-    SPRITESHEET = simplegui._load_local_image("../assets/missile_launcher.png")
+    SPRITESHEET = simplegui._load_local_image("../assets/entities/missile_launcher.png")
 
     # pre calculate angles
     TOP_LEFT     = math.pi * 0.25
@@ -1714,21 +1714,6 @@ class MissileLauncher(Entity):
     def face_player(self, player, direction):
         angle = direction.angle()
         self.angle = angle
-        """"
-        # turn the  launcher towards the player
-        if (angle >= MissileLauncher.TOP_LEFT) and (angle < MissileLauncher.TOP_RIGHT):
-            self.sprite.set_animation(([0, 0], [0, 0]), 1)
-        elif (angle >= MissileLauncher.TOP_LEFT) and (angle < math.pi):
-            self.sprite.set_animation(([1, 0], [1, 0]), 1)
-        elif (angle <= MissileLauncher.BOTTOM_RIGHT) and (angle > -math.pi):
-            self.sprite.set_animation(([1, 0], [1, 0]), 1)
-        elif (angle <= MissileLauncher.BOTTOM_LEFT) and (angle > MissileLauncher.BOTTOM_RIGHT):
-            self.sprite.set_animation(([2, 0], [2, 0]), 1)
-        elif (angle <= 0 ) and (angle > MissileLauncher.BOTTOM_LEFT):
-            self.sprite.set_animation(([3, 0], [3, 0]), 1)
-        elif (angle >= 0) and (angle < MissileLauncher.TOP_LEFT):
-            self.sprite.set_animation(([3, 0], [3, 0]), 1)
-        """
 
     def update(self):
         player = Entity.entities[0]
@@ -1761,7 +1746,7 @@ class Projectile:
 
 class Missile(Projectile):
 
-    SPRITESHEET = simplegui._load_local_image("../assets/missile.png")
+    SPRITESHEET = simplegui._load_local_image("../assets/entities/missile.png")
     SPEED = 1 / 64
 
     # pre calculate angles

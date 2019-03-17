@@ -66,12 +66,12 @@ class Option:
         else:
             canvas.draw_image(self.selected_img, self.half_dims, self.dims, self.pos.getP(), self.dims)
 
-unselected_img = simplegui._load_local_image("../assets/start_button_unselected.png")
-selected_img = simplegui._load_local_image("../assets/start_button_selected.png")
+unselected_img = simplegui._load_local_image("../assets/title_menu/start_button_unselected.png")
+selected_img = simplegui._load_local_image("../assets/title_menu//start_button_selected.png")
 option_start = Option(Vector((170, 400)), unselected_img, selected_img)
 
-unselected_img = simplegui._load_local_image("../assets/quit_button_unselected.png")
-selected_img = simplegui._load_local_image("../assets/quit_button_selected.png")
+unselected_img = simplegui._load_local_image("../assets/title_menu//quit_button_unselected.png")
+selected_img = simplegui._load_local_image("../assets/title_menu//quit_button_selected.png")
 option_quit = Option(Vector((460, 400)), unselected_img, selected_img)
 
 title_menu = Menu()

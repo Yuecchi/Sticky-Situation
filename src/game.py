@@ -54,7 +54,7 @@ class GameState(IntEnum):
 
 class Game:
 
-    TITLE_BG = simplegui._load_local_image("../assets/title_background.png")
+    TITLE_BG = simplegui._load_local_image("../assets/title_menu//title_background.png")
 
     def __init__(self):
 
@@ -67,11 +67,12 @@ class Game:
         self.title_menu = menu.title_menu
 
     def start(self):
-        level.load_level("../assets/level.txt")
+        level.load_level("../assets/levels/elliot.txt")
         self.change_state(GameState.GAME)
 
     def initialize_title_menu(self):
         self.title_menu.options[0].set_action(self.start)
+        self.title_menu.options[1].set_action(exit)
 
     def change_state(self, state):
         self.state = state
@@ -83,15 +84,20 @@ class Game:
     def draw(self, canvas):
 
         if self.state == GameState.TITLE:
+
             # display tile screen background image
             src_pos  = (Game.TITLE_BG.get_width() / 2, Game.TITLE_BG.get_height() / 2)
             src_dims = (Game.TITLE_BG.get_width(), Game.TITLE_BG.get_height())
             canvas.draw_image(Game.TITLE_BG, src_pos, src_dims, src_pos, src_dims)
+
             # check for menu option interaction
             self.title_menu.update(self.mouse)
+
             # display title menu options
             self.title_menu.display(canvas)
+
         if self.state == GameState.GAME:
+
             # update shit here (player pos, ai scripts, blah blah blah
             for entity in Entity.entity_updates:
                 entity.update()
@@ -134,7 +140,7 @@ index  = [1, 1, 10, 1, 1, 1, 1, 1, 1, 1, 1, 3 , 3 , 3 , 3 , 5 , 1 , 1 , 4 ]
 types  = [0, 2, 0 , 1, 1, 13, 1, 3, 4, 1, 1, 5 , 6 , 7 , 8 , 9 , 10, 11, 12]
 speeds = [1, 1, 8 , 1, 1, 1, 1, 1, 1, 1, 1, 15, 15, 15, 15, 15, 1 , 1 , 10]
 tilesheet = Tilesheet(testsheet_path, index, types, speeds)
-# tilesheet.save("../assets/testsheet.txt")ss
+# tilesheet.save("../assets/testsheet.txt")
 
 t_map = [
     [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
