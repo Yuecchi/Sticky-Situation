@@ -15,8 +15,6 @@ TILESIZE = tileEngine.TILESIZE
 HALFSIZE = tileEngine.HALFSIZE
 TILE_DIMS = tileEngine.TILE_DIMS
 
-#todo: need to account for newest tiletypes in entity tile check methods(both destination and current)
-
 class Sprite:
 
     def __init__(self, img):
