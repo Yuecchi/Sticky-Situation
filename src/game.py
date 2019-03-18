@@ -269,15 +269,14 @@ class Game:
         if self.state == GameState.LEVEL_COMPLETE:
             self.next_level()
 
-
         """
         canvas.draw_text("player position: " + str(player.pos), (0, 16), 16, "White")
         canvas.draw_text("player direction: " + str(player.direction), (0, 32), 16, "White")
         canvas.draw_text("player state: " + str(player.state), (0, 48), 16, "White")
         
-        
-        for i in range(len(self.level.entitymap)):
-            canvas.draw_text(str(self.level.entitymap[i]), (0, 16 + (i * 16)), 16, "White")
+        if self.level:
+            for i in range(len(self.level.entitymap)):
+                canvas.draw_text(str(self.level.entitymap[i]), (0, 16 + (i * 16)), 16, "White")
         """
 
         self.mouse.reset()

@@ -546,7 +546,7 @@ class Player(Entity):
             return entity.open
 
         def scientist(self, entity):
-            self.kill()
+            return True
 
         def missile_launcher(self, entity):
             return False
@@ -663,6 +663,7 @@ class Player(Entity):
         self.change_state(Player.DEFAULT_STATE)
         game._game.level.reset_level()
         self.pos = self.spawn
+        self.destination = self.pos
         map_entity(self)
 
     def update(self): # player update method
@@ -700,6 +701,7 @@ class Player(Entity):
                     # relative to the players current direction
                     self.go_idle()
             else:
+
                 # keep moving towards the destination until is has been reached
                 if self.pos != self.destination:
                     self.pos += (self.direction * self.speed)
@@ -1577,7 +1579,6 @@ class Scientist(Entity):
             ScientistState.WALK_LEFT  : walk_left,
             ScientistState.WALK_DOWN  : walk_down,
             ScientistState.WALK_RIGHT : walk_right
-
         }
 
         states[state](self)
@@ -1585,7 +1586,6 @@ class Scientist(Entity):
     def check_entity(self, entity): # scientist check entity method
 
         def player(self, entity):
-            entity.kill()
             return True
 
         def push_block(self, entity):
@@ -1685,9 +1685,32 @@ class Scientist(Entity):
         # move into new location on entity map
         game._game.level.entitymap[self.pos.y][self.pos.x] = self.id
 
+    def check_player(self):
+        player = Entity.entities[0]
+        dist = player.pos - self.pos
+        if dist.dot(dist) < 0.25:
+            player.kill()
+
     def update(self):
 
+        # check if player is in killing range
+        self.check_player()
+
         if self.moving:
+
+            """"
+            # check if the player is moving into the scientist
+            player = Entity.entities[0]
+            if player.destination == self.destination:
+                if self.check_player_dist(player, 0.25):
+                    player.kill()
+
+            # check if the player is already in the scientist's destination
+            if player. pos == self.destination:
+                if self.check_player_dist(player, 0.5):
+                    player.kill()
+            """
+
             if self.pos != self.destination:
                 self.pos += (self.direction * self.speed)
             else:
