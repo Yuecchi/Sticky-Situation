@@ -577,7 +577,8 @@ class Player(Entity):
             return
 
         def lever(self, entity):
-            entity.switch()
+            if self.pos.y > entity.pos.y:
+                entity.switch()
 
         def button(self, entity):
             entity.switch()
@@ -1751,6 +1752,16 @@ class MissileLauncher(Entity):
                     self.fired = True
 
     def draw(self, canvas):
+
+        # TODO: not actually faster in cases where there aren't that many entities being draw off screen
+        left = int(game._game.camera.pos.x)
+        if self.pos.x < left : return
+        if self.pos.x > min(left + int(tileEngine.MAX_TILES_X) + 1, len(game._game.level.tilemap.map[0])): return
+
+        top = int(game._game.camera.pos.y)
+        if self.pos.y < top: return
+        if self.pos.y > min(top + int(tileEngine.MAX_TILES_Y) + 1, len(game._game.level.tilemap.map)): return
+
         self.sprite.rot_draw(canvas, self.pos, self.angle)
 
     def save_data(self):
