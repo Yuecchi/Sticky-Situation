@@ -265,7 +265,7 @@ class Player(Entity):
             pass # wtf?
 
         def tile_icy(self):
-            self.moving = True
+            #self.moving = True
             self.go_idle()
             self.distance = 1
             self.move(self.pos + self.direction)
@@ -280,28 +280,28 @@ class Player(Entity):
             pass
 
         def tile_conveyor_up(self):
-            self.moving = True
+            #self.moving = True
             self.change_state(PlayerState.IDLE_UP)
             self.direction = Vector((0, -1))
             self.distance = 1
             self.move(self.pos + self.direction)
 
         def tile_conveyor_left(self):
-            self.moving = True
+            #self.moving = True
             self.change_state(PlayerState.IDLE_LEFT)
             self.direction = Vector((-1, 0))
             self.distance = 1
             self.move(self.pos + self.direction)
 
         def tile_conveyor_down(self):
-            self.moving = True
+            #self.moving = True
             self.change_state(PlayerState.IDLE_DOWN)
             self.direction = Vector((0, 1))
             self.distance = 1
             self.move(self.pos + self.direction)
 
         def tile_conveyor_right(self):
-            self.moving = True
+            #self.moving = True
             self.change_state(PlayerState.IDLE_RIGHT)
             self.direction = Vector((1, 0))
             self.distance = 1
@@ -548,7 +548,6 @@ class Player(Entity):
             return entity.open
 
         def scientist(self, entity):
-            # TODO: may want to improve collision detection on scientists
             self.kill()
 
         def missile_launcher(self, entity):
@@ -760,7 +759,7 @@ class PushBlock(Entity):
             pass
 
         def tile_icy(self):
-            self.moving = True
+            #self.moving = True
             self.move(self.pos + self.direction)
 
         def tile_left_fence(self):
@@ -773,22 +772,22 @@ class PushBlock(Entity):
             pass
 
         def tile_conveyor_up(self):
-            self.moving = True
+            #self.moving = True
             self.direction = Vector((0, -1))
             self.move(self.pos + self.direction)
 
         def tile_conveyor_left(self):
-            self.moving = True
+            #self.moving = True
             self.direction = Vector((-1, 0))
             self.move(self.pos + self.direction)
 
         def tile_conveyor_down(self):
-            self.moving = True
+            #self.moving = True
             self.direction = Vector((0, 1))
             self.move(self.pos + self.direction)
 
         def tile_conveyor_right(self):
-            self.moving = True
+            #self.moving = True
             self.direction = Vector((1, 0))
             self.move(self.pos + self.direction)
 
@@ -1342,7 +1341,9 @@ class Door(Entity):
             if entity.ENTITY_TYPE != self.ENTITY_TYPE:
                 return False
 
-        #TODO: do an entity destination check here
+        for entity in Entity.entity_moveable:
+            if self.pos == entity.destination:
+                return False
 
         self.open = not self.open
 
@@ -1424,7 +1425,10 @@ class VerticalTimedDoor(Door):
                     if entity.ENTITY_TYPE != self.ENTITY_TYPE:
                         return
 
-                # TODO: do an entity destination check here
+                # check for potential obstructions
+                for entity in Entity.entity_moveable:
+                    if self.pos == entity.destination:
+                        return False
 
                 # if no obstuctions are found, close the door
                 self.open = False
@@ -1478,7 +1482,10 @@ class HorizontalTimedDoor(Door):
                     if entity.ENTITY_TYPE != self.ENTITY_TYPE:
                         return
 
-                # TODO: do an entity destination check here
+                # check for potential obstructions
+                for entity in Entity.entity_moveable:
+                    if self.pos == entity.destination:
+                        return False
 
                 # if no obstuctions are found, close the door
                 self.open = False
