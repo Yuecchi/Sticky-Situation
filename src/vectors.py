@@ -1,4 +1,7 @@
 import math
+import tileEngine
+
+TILESIZE = tileEngine.TILESIZE
 
 # The Vector class
 class Vector:
@@ -38,8 +41,8 @@ class Vector:
         self.y += other.y
         return self
 
-    def __add__(self, other):
-        return self.copy().add(other);
+    def __add__(self, param):
+        return Vector((self.x + param.x, self.y + param.y))
 
     # Negates the vector (makes it point in the opposite direction)
     def negate(self):
@@ -55,8 +58,8 @@ class Vector:
         return self.add(-other)
 
     # Magic method for - (two operands)
-    def __sub__(self, other):
-        return self.copy().subtract(other)
+    def __sub__(self, param):
+        return Vector((self.x - param.x, self.y - param.y))
 
     # Returns the dot product of this vector with another one
     def dot(self, other):
@@ -71,23 +74,23 @@ class Vector:
     # Magic method for *
     # If the arguments are two vectors, it returns the dot product
     # Otherwise, returns the product by a scalar
-    def __mul__(self, x):
+    def __mul__(self, param):
         try:
-            return self.dot(x)
+            return self.dot(param)
         except:
-            return self.copy().multiply(x)
+            return Vector((self.x * param, self.y * param))
 
     # Magic method for * when the lefthand side is not a vector
-    def __rmul__(self, k):
-        return self.copy().multiply(k)
+    def __rmul__(self, param):
+        return Vector((self.x * param, self.y * param))
 
     # Divides the vector by a scalar
     def divide(self, k):
         return self.multiply(1 / k)
 
     # Magic method for /
-    def __truediv__(self, k):
-        return self.copy().divide(k)
+    def __truediv__(self, param):
+        return Vector((self.x / param, self.y / param))
 
     # Normalizes the vector
     def normalize(self):
@@ -112,8 +115,14 @@ class Vector:
         self.subtract(n)
         return self
 
-    # Returns the angle between this vector and another one
-    # You will need to use the arccosine function:
-    # acos in the math library
-    def angle(self, other):
-        pass
+    def angle(self):
+        return math.atan2(self.y, self.x)
+
+    # convert vector components to integers
+    def to_int(self):
+        self.x = int(self.x)
+        self.y = int(self.y)
+
+    # convert to tilegrid location
+    def to_grid(self):
+        return Vector((int(self.x // TILESIZE), int(self.y // TILESIZE)))
