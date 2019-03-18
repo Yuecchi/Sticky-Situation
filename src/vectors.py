@@ -94,6 +94,8 @@ class Vector:
 
     # Normalizes the vector
     def normalize(self):
+        if self == Vector():
+            return Vector()
         return self.divide(self.length())
 
     # Returns a normalized version of the vector
