@@ -546,7 +546,7 @@ class Player(Entity):
             return entity.open
 
         def scientist(self, entity):
-            self.kill()
+            return True
 
         def missile_launcher(self, entity):
             return False
@@ -1340,6 +1340,7 @@ class Door(Entity):
             if entity.ENTITY_TYPE != self.ENTITY_TYPE:
                 return False
 
+        # check potential obstructions
         for entity in Entity.entity_moveable:
             if self.pos == entity.destination:
                 return False
@@ -1585,7 +1586,6 @@ class Scientist(Entity):
     def check_entity(self, entity): # scientist check entity method
 
         def player(self, entity):
-            entity.kill()
             return True
 
         def push_block(self, entity):
@@ -1685,7 +1685,14 @@ class Scientist(Entity):
         # move into new location on entity map
         game._game.level.entitymap[self.pos.y][self.pos.x] = self.id
 
+
     def update(self):
+
+        player = Entity.entities[0]
+        d = self.pos - player.pos
+        dsq = d.dot(d)
+        if dsq < 0.25:
+            player.kill()
 
         if self.moving:
             if self.pos != self.destination:
@@ -1887,6 +1894,20 @@ class Missile(Projectile):
 
     def draw(self, canvas):
         self.sprite.rot_draw(canvas, self.pos, self.angle)
+
+        # get the true center position of the missile
+        pos = Vector((HALFSIZE + (self.pos.x * TILESIZE), HALFSIZE + (self.pos.y * TILESIZE)))
+
+        contact_points = [
+            (pos + Vector((math.cos(Missile.TOP_LEFT     + self.angle), math.sin(Missile.TOP_LEFT     + self.angle))) * Missile.LENGTH).getP(),
+            (pos + Vector((math.cos(Missile.TOP_RIGHT    + self.angle), math.sin(Missile.TOP_RIGHT    + self.angle))) * Missile.LENGTH).getP(),
+            (pos + Vector((math.cos(Missile.BOTTOM_LEFT  + self.angle), math.sin(Missile.BOTTOM_LEFT  + self.angle))) * Missile.LENGTH).getP(),
+            (pos + Vector((math.cos(Missile.BOTTOM_RIGHT + self.angle), math.sin(Missile.BOTTOM_RIGHT + self.angle))) * Missile.LENGTH).getP()
+        ]
+
+        for p in contact_points:
+            canvas.draw_circle(p, 2, 1, "Red", "Red")
+
 
 class Hitbox:
 
