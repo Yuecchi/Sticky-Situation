@@ -1698,19 +1698,6 @@ class Scientist(Entity):
 
         if self.moving:
 
-            """"
-            # check if the player is moving into the scientist
-            player = Entity.entities[0]
-            if player.destination == self.destination:
-                if self.check_player_dist(player, 0.25):
-                    player.kill()
-
-            # check if the player is already in the scientist's destination
-            if player. pos == self.destination:
-                if self.check_player_dist(player, 0.5):
-                    player.kill()
-            """
-
             if self.pos != self.destination:
                 self.pos += (self.direction * self.speed)
             else:
