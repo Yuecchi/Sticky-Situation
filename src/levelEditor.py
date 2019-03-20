@@ -1237,12 +1237,17 @@ def list_csv_big(buffer):
 def load_level(path):
     global level_tile_grid, level_entity_grid, level_name, level_loaded
 
+    try:
+        file = open('../assets/levels/' + path + '.txt', "rt")
+    except OSError as e:
+        print("File not Found")
+        return
+
     level_loaded = False
     # change to tile view
+    toolbar.setEntity(None)
     if tools.entityState.state == 1:
         inputs.editSwap()
-
-    file = open('../assets/levels/' + path + '.txt', "rt")
 
     level_name = path
     # read source tilesheet path
