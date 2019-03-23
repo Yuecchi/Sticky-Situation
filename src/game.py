@@ -84,7 +84,7 @@ class Game:
     GAME_OVER_IMG_SRC = simplegui._load_local_image('../assets/ui/game_over.png')
     GAME_OVER_IMG = StaticImage(GAME_OVER_IMG_SRC)
 
-    # TITLE_MUSIC = simplegui._load_local_sound("../assets/menus/title_menu/SS_Original.mp3")
+    TITLE_MUSIC = simplegui._load_local_sound("../assets/menus/title_menu/SS_Original.wav")
 
     YOU_WIN_IMG_SRC = (
         simplegui._load_local_image('../assets/ui/SS-win-1.png'),
@@ -191,7 +191,7 @@ class Game:
 
         if self.state == GameState.TITLE:
             # todo: fix and implement better
-            # Game.TITLE_MUSIC.play()
+            Game.TITLE_MUSIC.play()
             # display tile screen background image
             Game.TITLE_BG.draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
 
@@ -200,6 +200,9 @@ class Game:
 
             # display title menu options
             self.title_menu.display(canvas)
+
+            if self.state != GameState.TITLE:
+                Game.TITLE_MUSIC.rewind()
 
         if self.state == GameState.GAME:
 
