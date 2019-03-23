@@ -845,9 +845,11 @@ class Input:
                 self.set_colour(pos)  # Paint cells after
             else:  # If picking
                 self.brush = level_tile_grid.get_selected(pos).tileNo
+                tools.pickState.set(0)
                 tools.displayBox.paint(self.brush)
                 print(self.brush)
-                self.fill()
+                if tools.fillState.state == 3:
+                    self.fill()
         elif level_entity_grid.contains(pos):
             if tools.selectState.state == 1:  # If we are selecting entities
                 if toolbar.entity is not None and toolbar.extraButton.state == 1:  # If we are assigning extra values
@@ -865,8 +867,8 @@ class Input:
                         if level_entity_grid.tiles[entity_pos[0]][entity_pos[1]].tileNo != -1:  # If entity was clicked
                             entity = 0
                             for test_entity in self.entities:
-                                if test_entity.pos == [entity_pos[1], entity_pos[0]] or \
-                                        test_entity.pos == [entity_pos[0], entity_pos[1]] and test_entity.type == 1:  # Find it by position
+                                if (test_entity.pos == [entity_pos[1], entity_pos[0]] and test_entity.type != 1) or \
+                                        (test_entity.pos == [entity_pos[0], entity_pos[1]] and test_entity.type == 1):  # Find it by position
                                     entity = test_entity
                                     break
                             if toolbar.actionButton.state == 0:
@@ -940,6 +942,8 @@ class Input:
             toolbar.list.click(pos)
 
     def set_colour(self, pos):
+        if tools.pickState.state == 1:
+            return
         if tools.entityState.state == 0:
             if self.brush != -1 and tools.fillState.state == 0 and level_tile_grid.contains(pos):
                 if isinstance(self.tile_sheet.tiles[self.brush], BigTile):
@@ -1233,12 +1237,17 @@ def list_csv_big(buffer):
 def load_level(path):
     global level_tile_grid, level_entity_grid, level_name, level_loaded
 
+    try:
+        file = open('../assets/levels/' + path + '.txt', "rt")
+    except OSError as e:
+        print("File not Found")
+        return
+
     level_loaded = False
     # change to tile view
+    toolbar.setEntity(None)
     if tools.entityState.state == 1:
         inputs.editSwap()
-
-    file = open('../assets/levels/' + path + '.txt', "rt")
 
     level_name = path
     # read source tilesheet path
