@@ -84,6 +84,26 @@ class Game:
     GAME_OVER_IMG_SRC = simplegui._load_local_image('../assets/ui/game_over.png')
     GAME_OVER_IMG = StaticImage(GAME_OVER_IMG_SRC)
 
+    YOU_WIN_IMG_SRC = (
+        simplegui._load_local_image('../assets/ui/SS-win-1.png'),
+        simplegui._load_local_image('../assets/ui/SS-win-2.png'),
+        simplegui._load_local_image('../assets/ui/SS-win-3.png'),
+        simplegui._load_local_image('../assets/ui/SS-win-4.png'),
+        simplegui._load_local_image('../assets/ui/SS-win-6.png'),
+        simplegui._load_local_image('../assets/ui/SS-win-8.png'),
+        simplegui._load_local_image('../assets/ui/SS-win-9.png'),
+    )
+
+    YOU_WIN_IMG = (
+        StaticImage(YOU_WIN_IMG_SRC[0]),
+        StaticImage(YOU_WIN_IMG_SRC[1]),
+        StaticImage(YOU_WIN_IMG_SRC[2]),
+        StaticImage(YOU_WIN_IMG_SRC[3]),
+        StaticImage(YOU_WIN_IMG_SRC[4]),
+        StaticImage(YOU_WIN_IMG_SRC[5]),
+        StaticImage(YOU_WIN_IMG_SRC[6]),
+    )
+
     def __init__(self):
 
         self.state = GameState.TITLE
@@ -94,6 +114,8 @@ class Game:
         self.lives = 0
         self.score = 0
         self.time  = 0 # time will be loaded from level I guess
+
+        self.win_quote = 0
 
         self.mouse = handlers.mouse
         self.title_menu = menu.title_menu
@@ -267,17 +289,13 @@ class Game:
 
         # level complete
         if self.state == GameState.LEVEL_COMPLETE:
-            self.next_level()
-
-        """
-        canvas.draw_text("player position: " + str(player.pos), (0, 16), 16, "White")
-        canvas.draw_text("player direction: " + str(player.direction), (0, 32), 16, "White")
-        canvas.draw_text("player state: " + str(player.state), (0, 48), 16, "White")
-        
-        if self.level:
-            for i in range(len(self.level.entitymap)):
-                canvas.draw_text(str(self.level.entitymap[i]), (0, 16 + (i * 16)), 16, "White")
-        """
+            if not self.inSandbox:
+                Game.YOU_WIN_IMG[self.win_quote].draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
+                canvas.draw_text("Level Complete, Press the action button ('m') to proceed to the next level", (30, 460), 14, "Lime", "monospace")
+                if handlers.keyboard.m == True:
+                    self.next_level()
+            else:
+                self.next_level()
 
         self.mouse.reset()
         if self.state != GameState.PAUSE:

@@ -10,6 +10,7 @@ from vectors import Vector
 import tileEngine
 from tileEngine import TileType
 import math
+from random import randint
 
 TILESIZE = tileEngine.TILESIZE
 HALFSIZE = tileEngine.HALFSIZE
@@ -68,7 +69,6 @@ class Entity:
     entity_updates = []
     entity_drawing = []
     entity_moveable = []
-
 
     def __init__(self, pos):
 
@@ -333,6 +333,7 @@ class Player(Entity):
             self.kill()
 
         def tile_goal(self):
+            game._game.win_quote = randint(0, 7)
             game._game.change_state(game.GameState.LEVEL_COMPLETE)
 
         tiles = {
