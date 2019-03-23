@@ -10,6 +10,7 @@ import handlers
 import game
 
 def make_frame():
+
     # standard boilerplate code for creating a frame in simplgui
     frame = simplegui.create_frame("Sticky Situation", FRAMEWIDTH, FRAMEHEIGHT)
     frame.set_draw_handler(game._game.draw)
