@@ -30,6 +30,7 @@ from level      import Level
 from camera     import Camera
 import menu
 import handlers
+from random import randint
 
 FRAMEWIDTH, FRAMEHEIGHT = 640, 480
 
@@ -106,6 +107,15 @@ class Game:
         StaticImage(YOU_WIN_IMG_SRC[6]),
     )
 
+    MUSIC = (
+        simplegui._load_local_sound("../assets/levels/music/bald.ogg"),
+        simplegui._load_local_sound("../assets/levels/music/beethoven.ogg"),
+        simplegui._load_local_sound("../assets/levels/music/carmina.ogg"),
+        simplegui._load_local_sound("../assets/levels/music/holst.ogg"),
+        simplegui._load_local_sound("../assets/levels/music/toccata.ogg"),
+        simplegui._load_local_sound("../assets/levels/music/valkyrie.ogg")
+    )
+
     def __init__(self):
 
         self.state = GameState.TITLE
@@ -126,6 +136,7 @@ class Game:
         self.close = True
 
         self.inSandbox = False
+        self.music = None
 
     def start(self):
         self.lives = 100
@@ -133,6 +144,7 @@ class Game:
         self.time  = 300 * 60 #todo: temporary time setter for testing
         level.load_level("../assets/levels/_level1.txt")
         self.change_state(GameState.GAME)
+        self.music = Game.MUSIC[randint(0, 5)]
 
     def next_level(self):
         self.score += (self.time // 60)
@@ -142,9 +154,12 @@ class Game:
             self.inSandbox = False
             self.change_state(GameState.EDITOR)
         elif self.level.next_level == '':
+            self.music.rewind()
             self.change_state(GameState.TITLE)
         else:
             level.load_level(self.level.next_level)
+            self.music.rewind()
+            self.music = Game.MUSIC[randint(0, 5)]
             self.change_state(GameState.GAME)
 
     def launch_editor(self):
@@ -190,7 +205,6 @@ class Game:
         global frame
 
         if self.state == GameState.TITLE:
-            # todo: fix and implement better
             Game.TITLE_MUSIC.play()
             # display tile screen background image
             Game.TITLE_BG.draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
@@ -205,6 +219,9 @@ class Game:
                 Game.TITLE_MUSIC.rewind()
 
         if self.state == GameState.GAME:
+
+            if not self.inSandbox:
+                self.music.play()
 
             # update shit here (player pos, ai scripts, blah blah blah
             for entity in Entity.entity_updates:
@@ -249,9 +266,13 @@ class Game:
                     self.inSandbox = False
                     self.change_state(GameState.EDITOR)
                 else:
+                    self.music.rewind()
                     self.change_state(GameState.TITLE)
 
+
         if self.state == GameState.PAUSE:
+
+            self.music.play()
 
             # check for pause menu interaction
             self.pause_menu.update(self.mouse)
@@ -287,6 +308,7 @@ class Game:
                     self.inSandbox = False
                     self.change_state(GameState.EDITOR)
                 else:
+                    self.music.rewind()
                     self.change_state(GameState.TITLE)
 
         if self.state == GameState.EDITOR:

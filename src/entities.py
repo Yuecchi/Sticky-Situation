@@ -147,6 +147,11 @@ class PlayerState(IntEnum):
     JUMP_RIGHT  = 11
     DEAD        = 12
 
+class PlayerDeath(IntEnum):
+
+    SPIKE = 0
+
+
 class Player(Entity):
 
     ENTITY_TYPE = 1
@@ -338,7 +343,7 @@ class Player(Entity):
             self.kill()
 
         def tile_goal(self):
-            game._game.win_quote = randint(0, 7)
+            game._game.win_quote = randint(0, 6)
             game._game.change_state(game.GameState.LEVEL_COMPLETE)
 
         tiles = {
