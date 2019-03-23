@@ -154,6 +154,8 @@ class Player(Entity):
     DEFAULT_STATE = PlayerState.IDLE_DOWN
     SPRITESHEET = simplegui._load_local_image('../assets/entities/horse.png')
 
+    JUMP_SOUND = simplegui._load_local_sound('../assets/entities/jump1.wav')
+
     def __init__(self, pos):
 
         Entity.__init__(self, pos)
@@ -223,16 +225,19 @@ class Player(Entity):
             self.state = PlayerState.JUMP_LEFT
             self.sprite.set_animation(([0, 11], [4, 11]), 15)
             self.distance = 2
+            Player.JUMP_SOUND.play()
 
         def jump_down(self):
             self.state = PlayerState.JUMP_DOWN
             self.sprite.set_animation(([0, 13], [4, 13]), 15)
             self.distance = 2
+            Player.JUMP_SOUND.play()
 
         def jump_right(self):
             self.state = PlayerState.JUMP_RIGHT
             self.sprite.set_animation(([0, 12], [4, 12]), 15)
             self.distance = 2
+            Player.JUMP_SOUND.play()
 
         def dead(self):
             self.state = PlayerState.DEAD
@@ -1080,6 +1085,7 @@ class Lever(Trigger):
 
     ENTITY_TYPE = 3
     SPRITESHEET = simplegui._load_local_image('../assets/entities/triggers/lever.png')
+    SWITCH_SOUND = simplegui._load_local_sound('../assets/entities/triggers/switch_lever.wav')
 
     def __init__(self, pos):
 
@@ -1114,6 +1120,7 @@ class Lever(Trigger):
 
             # if all contacts sucessfully triggered, fltip the switch
             self.on = not self.on
+            Lever.SWITCH_SOUND.play()
 
             if self.on:
                 self.sprite.set_animation(([1, 0], [1, 0]), 1)
@@ -1134,6 +1141,7 @@ class Button(Trigger):
 
     ENTITY_TYPE = 4
     SPRITESHEET = simplegui._load_local_image('../assets/entities/triggers/button.png')
+    SWITCH_SOUND = simplegui._load_local_sound('../assets/entities/triggers/carbuncle.wav')
 
     def  __init__(self, pos):
 
@@ -1163,6 +1171,7 @@ class Button(Trigger):
 
             if self.contact.trigger():
                 self.on = not self.on
+                Button.SWITCH_SOUND.play()
 
                 if self.on:
                     self.time = self.timer
@@ -1192,6 +1201,9 @@ class Panel(Trigger):
 
     ENTITY_TYPE = 5
     SPRITESHEET = simplegui._load_local_image('../assets/entities/triggers/panel.png')
+
+    PANEL_UP_SOUND = simplegui._load_local_sound('../assets/entities/triggers/panel_up.wav')
+    PANEL_DOWN_SOUND = simplegui._load_local_sound('../assets/entities/triggers/panel_down.wav')
 
     def __init__(self, pos):
 
@@ -1229,9 +1241,11 @@ class Panel(Trigger):
             if self.on:
                 unmap_entity(self)
                 self.sprite.set_animation(([1, 0], [1, 0]), 1)
+                Panel.PANEL_DOWN_SOUND.play()
             else:
                 map_entity(self)
                 self.sprite.set_animation(([0, 0], [0, 0]), 1)
+                Panel.PANEL_UP_SOUND.play()
 
     def contact_data(self):
         if len(self.contacts) != 0:
@@ -1298,9 +1312,11 @@ class LoosePanel(Trigger):
             if self.on:
                 unmap_entity(self)
                 self.sprite.set_animation(([1, 0], [1, 0]), 1)
+                Panel.PANEL_DOWN_SOUND.play()
             else:
                 map_entity(self)
                 self.sprite.set_animation(([0, 0], [0, 0]), 1)
+                Panel.PANEL_UP_SOUND.play()
 
     def contact_data(self):
         if len(self.contacts) != 0:
@@ -1320,6 +1336,8 @@ class LoosePanel(Trigger):
                 self.switch()
 
 class Door(Entity):
+
+    OPEN_SOUND = simplegui._load_local_sound("../assets/entities/doors/hatch_open.wav")
 
     def __init__(self, pos):
 
@@ -1351,6 +1369,7 @@ class Door(Entity):
         self.open = not self.open
 
         if self.open:
+            # Door.OPEN_SOUND.play()
             unmap_entity(self)
             self.sprite.set_animation(([1, 0], [1, 0]), 1)
         else:
@@ -1721,6 +1740,9 @@ class MissileLauncher(Entity):
 
     ENTITY_TYPE = 12
     SPRITESHEET = simplegui._load_local_image("../assets/entities/missile_launcher.png")
+    LAUNCH_SOUND = simplegui._load_local_sound("../assets/entities/launch.wav")
+
+    # todo: player in range sound
 
     # pre calculate angles
     TOP_LEFT     = math.pi * 0.25
@@ -1766,6 +1788,7 @@ class MissileLauncher(Entity):
                 self.face_player(player, direction)
                 if not self.fired:
                     Missile(self.pos, direction, self)
+                    MissileLauncher.LAUNCH_SOUND.play()
                     self.fired = True
 
     def draw(self, canvas):
@@ -1801,6 +1824,8 @@ class Missile(Projectile):
 
     SPRITESHEET = simplegui._load_local_image("../assets/entities/missile.png")
     SPEED = 1 / 64
+    EXPLODE_SOUND = simplegui._load_local_sound("../assets/entities/boom1.wav")
+    IN_AIR_SOUND = simplegui._load_local_sound("../assets/entities/missile_in_air.wav")
 
     # pre calculate angles
     CENTER       = Vector((17, 15))
@@ -1832,6 +1857,7 @@ class Missile(Projectile):
     def explode(self):
         self.sprite.set_animation(([1, 0], [8, 0]), 5)
         self.sprite.loop_animations = False
+        Missile.EXPLODE_SOUND.play()
         self.exploded = True
 
     def check_collisions(self):
@@ -1896,23 +1922,8 @@ class Missile(Projectile):
         self.pos += (self.direction * Missile.SPEED)
         self.hitbox.update(self.pos)
 
-
     def draw(self, canvas):
         self.sprite.rot_draw(canvas, self.pos, self.angle)
-
-        # get the true center position of the missile
-        pos = Vector((HALFSIZE + (self.pos.x * TILESIZE), HALFSIZE + (self.pos.y * TILESIZE)))
-
-        contact_points = [
-            (pos + Vector((math.cos(Missile.TOP_LEFT     + self.angle), math.sin(Missile.TOP_LEFT     + self.angle))) * Missile.LENGTH).getP(),
-            (pos + Vector((math.cos(Missile.TOP_RIGHT    + self.angle), math.sin(Missile.TOP_RIGHT    + self.angle))) * Missile.LENGTH).getP(),
-            (pos + Vector((math.cos(Missile.BOTTOM_LEFT  + self.angle), math.sin(Missile.BOTTOM_LEFT  + self.angle))) * Missile.LENGTH).getP(),
-            (pos + Vector((math.cos(Missile.BOTTOM_RIGHT + self.angle), math.sin(Missile.BOTTOM_RIGHT + self.angle))) * Missile.LENGTH).getP()
-        ]
-
-        for p in contact_points:
-            canvas.draw_circle(p, 2, 1, "Red", "Red")
-
 
 class Hitbox:
 

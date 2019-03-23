@@ -84,6 +84,8 @@ class Game:
     GAME_OVER_IMG_SRC = simplegui._load_local_image('../assets/ui/game_over.png')
     GAME_OVER_IMG = StaticImage(GAME_OVER_IMG_SRC)
 
+    # TITLE_MUSIC = simplegui._load_local_sound("../assets/menus/title_menu/SS_Original.mp3")
+
     YOU_WIN_IMG_SRC = (
         simplegui._load_local_image('../assets/ui/SS-win-1.png'),
         simplegui._load_local_image('../assets/ui/SS-win-2.png'),
@@ -126,7 +128,7 @@ class Game:
         self.inSandbox = False
 
     def start(self):
-        self.lives = 10
+        self.lives = 100
         self.score = 0
         self.time  = 300 * 60 #todo: temporary time setter for testing
         level.load_level("../assets/levels/_level1.txt")
@@ -188,7 +190,8 @@ class Game:
         global frame
 
         if self.state == GameState.TITLE:
-
+            # todo: fix and implement better
+            # Game.TITLE_MUSIC.play()
             # display tile screen background image
             Game.TITLE_BG.draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
 
