@@ -150,7 +150,11 @@ class PlayerState(IntEnum):
 class PlayerDeath(IntEnum):
 
     SPIKE = 0
-
+    GLUE  = 1
+    FIRE  = 2
+    FAN   = 3
+    WATER = 4
+    GHOST = 5
 
 class Player(Entity):
 
@@ -160,6 +164,11 @@ class Player(Entity):
     SPRITESHEET = simplegui._load_local_image('../assets/entities/horse.png')
 
     JUMP_SOUND = simplegui._load_local_sound('../assets/entities/jump1.wav')
+
+    SPIKE_DEATH_SOUND = simplegui._load_local_sound('../assets/entities/spike_death.wav')
+    WATER_DEATH_SOUND = simplegui._load_local_sound('../assets/entities/water_death.wav')
+    FAN_DEATH_SOUND = simplegui._load_local_sound('../assets/entities/fan_death.wav')
+    GLUE_DEATH_SOUND = simplegui._load_local_sound('../assets/entities/glue_death.wav')
 
     def __init__(self, pos):
 
@@ -325,24 +334,25 @@ class Player(Entity):
             return True
 
         def tile_glue(self):
-            self.kill()
+            self.kill(PlayerDeath.GLUE)
 
         def tile_fire(self):
-            self.kill()
+            self.kill(PlayerDeath.FIRE)
 
         def tile_fan(self):
-            self.kill()
+            self.kill(PlayerDeath.FAN)
 
         def tile_water(self):
-            self.kill()
+            self.kill(PlayerDeath.WATER)
 
         def tile_laser(self):
             self.kill()
 
         def tile_ghost(self):
-            self.kill()
+            self.kill(PlayerDeath.GHOST)
 
         def tile_goal(self):
+            clear_missiles()
             game._game.win_quote = randint(0, 6)
             game._game.change_state(game.GameState.LEVEL_COMPLETE)
 
@@ -646,7 +656,7 @@ class Player(Entity):
         # move into new location on entity map
         game._game.level.entitymap[self.pos.y][self.pos.x] = self.id
 
-    def kill(self):
+    def kill(self, death = PlayerDeath.SPIKE):
         if not self.dead:
             # set dead flag to true
             self.dead = True#
@@ -657,19 +667,57 @@ class Player(Entity):
             last_state = self.state % 4
             self.change_state(PlayerState.DEAD)
 
-            if last_state == PlayerState.IDLE_UP:
-                self.sprite.set_animation(([0, 7], [3, 7]), 10)
-            elif last_state == PlayerState.IDLE_LEFT:
-                self.sprite.set_animation(([0, 8], [3, 8]), 10)
-            elif last_state == PlayerState.IDLE_DOWN:
-                self.sprite.set_animation(([0, 9], [3, 9]), 10)
-            elif last_state == PlayerState.IDLE_RIGHT:
-                self.sprite.set_animation(([0, 10], [3, 10]), 10)
+            # spike death
+            if death == PlayerDeath.SPIKE:
+                if last_state == PlayerState.IDLE_UP:
+                    self.sprite.set_animation(([0, 7], [3, 7]), 10)
+                elif last_state == PlayerState.IDLE_LEFT:
+                    self.sprite.set_animation(([0, 8], [3, 8]), 10)
+                elif last_state == PlayerState.IDLE_DOWN:
+                    self.sprite.set_animation(([0, 9], [3, 9]), 10)
+                elif last_state == PlayerState.IDLE_RIGHT:
+                    self.sprite.set_animation(([0, 10], [3, 10]), 10)
+                Player.SPIKE_DEATH_SOUND.play()
+            elif death == PlayerDeath.GLUE:
+                if last_state == PlayerState.IDLE_UP:
+                    self.sprite.set_animation(([0, 14], [0, 14]), 10)
+                elif last_state == PlayerState.IDLE_LEFT:
+                    self.sprite.set_animation(([1, 14], [1, 14]), 10)
+                elif last_state == PlayerState.IDLE_DOWN:
+                    self.sprite.set_animation(([2, 14], [2, 14]), 10)
+                elif last_state == PlayerState.IDLE_RIGHT:
+                    self.sprite.set_animation(([3, 14], [3, 14]), 10)
+                Player.GLUE_DEATH_SOUND.play()
+            elif death == PlayerDeath.FIRE:
+                if last_state == PlayerState.IDLE_UP:
+                    self.sprite.set_animation(([0, 15], [3, 15]), 10)
+                elif last_state == PlayerState.IDLE_LEFT:
+                    self.sprite.set_animation(([0, 16], [3, 16]), 10)
+                elif last_state == PlayerState.IDLE_DOWN:
+                    self.sprite.set_animation(([0, 17], [3, 17]), 10)
+                elif last_state == PlayerState.IDLE_RIGHT:
+                    self.sprite.set_animation(([0, 18], [3, 18]), 10)
+            elif death == PlayerDeath.FAN:
+                self.sprite.set_animation(([0, 19], [6, 19]), 10)
+                Player.FAN_DEATH_SOUND.play()
+            elif death == PlayerDeath.WATER:
+                self.sprite.set_animation(([0, 20], [4, 20]), 10)
+                Player.WATER_DEATH_SOUND.play()
+            elif death == PlayerDeath.GHOST:
+                if last_state == PlayerState.IDLE_UP:
+                    self.sprite.set_animation(([0, 21], [3, 21]), 10)
+                elif last_state == PlayerState.IDLE_LEFT:
+                    self.sprite.set_animation(([0, 21], [3, 21]), 10)
+                elif last_state == PlayerState.IDLE_DOWN:
+                    self.sprite.set_animation(([0, 21], [3, 21]), 10)
+                elif last_state == PlayerState.IDLE_RIGHT:
+                    self.sprite.set_animation(([0, 21], [3, 21]), 10)
 
             # set respawn time
             self.respawn_time = self.respawn_timer * 60
 
     def respawn(self):
+        clear_missiles()
         self.dead = False
         self.change_state(Player.DEFAULT_STATE)
         game._game.level.reset_level()
@@ -1827,6 +1875,10 @@ class Projectile:
         self.hitbox = Hitbox(pos, 0.6)
 
         Projectile.projectiles.append(self)
+
+def clear_missiles():
+    for missile in Projectile.projectiles:
+        missile.explode()
 
 class Missile(Projectile):
 
