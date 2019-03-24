@@ -22,6 +22,13 @@ def make_frame():
     if game._game.state == game.GameState.EDITOR:
         game._game.change_state(game.GameState.TITLE)
 
+    frame.add_label("CONTROLS")
+    frame.add_label("")
+    frame.add_label("Press the WASD keys to move")
+    frame.add_label("")
+    frame.add_label("Press M to interact with")
+    frame.add_label("buttons and levers")
+
     frame.start()
 
 # THE WORLDS GREATEST HACK1!!
@@ -37,13 +44,12 @@ while True:
     if game._game.state == game.GameState.EDITOR:
         if not gotem:
             import levelEditor
+            levelEditor.EDITOR_MUSIC.rewind()
             gotem = True
         else:
             importlib.reload(levelEditor)
-
+            levelEditor.EDITOR_MUSIC.rewind()
         if game._game.close:
             break
         else:
             game._game.close = True
-
-

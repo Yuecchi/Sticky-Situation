@@ -338,7 +338,10 @@ class Game:
         if self.state == GameState.LEVEL_COMPLETE:
             if not self.inSandbox:
                 Game.YOU_WIN_IMG[self.win_quote].draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
-                canvas.draw_text("Level Complete, Press the action button ('m') to proceed to the next level", (30, 460), 14, "Lime", "monospace")
+                if self.level.next_level == '':
+                    canvas.draw_text("Congratulations, you Won! Press the action button to return to the title screen", (4, 460), 14, "Lime", "monospace")
+                else:
+                    canvas.draw_text("Level Complete, Press the action button ('m') to proceed to the next level", (30, 460), 14, "Lime", "monospace")
                 if handlers.keyboard.m == True:
                     self.next_level()
             else:

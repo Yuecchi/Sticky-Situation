@@ -11,6 +11,8 @@ from vectors import Vector
 CANVAS_DIMS = [900, 600]
 TILE_SIZE = 32
 
+EDITOR_MUSIC = simplegui._load_local_sound("../assets/levels/music/editor.ogg")
+
 ENTITY_IMG = simplegui._load_local_image('../assets/sprite_sheets/entities.png')
 ENTITY_SRC_POS = [(4.5*TILE_SIZE, 20.5*TILE_SIZE),  # Blank - 0
                   (0.5*TILE_SIZE, 18.5*TILE_SIZE),  # Player - 1
@@ -1384,6 +1386,9 @@ def drag(pos):
 
 def draw(canvas):
     global _game
+
+    EDITOR_MUSIC.play()
+
     if level_loaded:
         for i in range(len(inputs.tile_sheet.tiles)):
             # resets the update flags on all tiles before drawing them
