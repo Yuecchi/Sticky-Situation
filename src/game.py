@@ -272,7 +272,8 @@ class Game:
 
         if self.state == GameState.PAUSE:
 
-            self.music.play()
+            if not self.inSandbox:
+                self.music.play()
 
             # check for pause menu interaction
             self.pause_menu.update(self.mouse)

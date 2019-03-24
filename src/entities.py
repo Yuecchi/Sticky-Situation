@@ -178,7 +178,7 @@ class Player(Entity):
         self.respawn_timer = 3
         self.respawn_time  = 0
 
-        self.hitbox = Hitbox(self.pos)
+        self.hitbox = Hitbox(self.pos, 0.6)
 
     def change_state(self, state):
 
@@ -751,6 +751,8 @@ class PushBlock(Entity):
         self.speed = Player.WALK_SPEED
         self.stuck = False
 
+        self.hitbox = Hitbox(self.pos, 1)
+
     def reset(self):
         self.pos = self.spawn
         self.dead = False
@@ -1064,6 +1066,7 @@ class PushBlock(Entity):
                 pass
             if self.pos != self.destination:
                 self.pos += (self.direction * self.speed)
+                self.hitbox.update(self.pos)
             else:
                 self.moving = False
                 self.pos.to_int()
@@ -1821,7 +1824,7 @@ class Projectile:
 
         self.pos = pos
         self.direction = direction.normalize()
-        self.hitbox = Hitbox(pos)
+        self.hitbox = Hitbox(pos, 0.6)
 
         Projectile.projectiles.append(self)
 
@@ -1830,7 +1833,6 @@ class Missile(Projectile):
     SPRITESHEET = simplegui._load_local_image("../assets/entities/missile.png")
     SPEED = 1 / 64
     EXPLODE_SOUND = simplegui._load_local_sound("../assets/entities/boom1.wav")
-    IN_AIR_SOUND = simplegui._load_local_sound("../assets/entities/missile_in_air.wav")
 
     # pre calculate angles
     CENTER       = Vector((17, 15))
@@ -1886,11 +1888,21 @@ class Missile(Projectile):
 
             entity = get_entity(p)
             if entity:
+                """
                 if entity.ENTITY_TYPE == PushBlock.ENTITY_TYPE:
                     self.explode()
                     return
-                elif entity.isDoor:
+                """
+                if entity.isDoor:
                     if not entity.open:
+                        self.explode()
+                        return
+
+        # new collision detection for missile vs box (invincibility glitch fix)
+        for entity in Entity.entities:
+            if entity.ENTITY_TYPE == PushBlock.ENTITY_TYPE:
+                for p in contact_points:
+                    if entity.hitbox.intersect(p * TILESIZE):
                         self.explode()
                         return
 
@@ -1932,18 +1944,28 @@ class Missile(Projectile):
 
 class Hitbox:
 
-    SIZE = TILESIZE * 0.6
+    #SIZE = TILESIZE * 0.6
 
-    def __init__(self, pos):
+    def __init__(self, pos, scale):
 
         self.pos = (pos * TILESIZE) - Vector((HALFSIZE, HALFSIZE))
+        self.size = TILESIZE * scale
 
-    # bounding box overlap check
+    # checks if two hitboxes are overlapping
     def overlap(self, hitbox):
-        if self.pos.x + Hitbox.SIZE < hitbox.pos.x: return False
-        elif self.pos.x > hitbox.pos.x + Hitbox.SIZE: return False
-        elif self.pos.y + Hitbox.SIZE < hitbox.pos.y: return False
-        elif self.pos.y > hitbox.pos.y + Hitbox.SIZE: return False
+        if self.pos.x + self.size < hitbox.pos.x: return False
+        elif self.pos.x > hitbox.pos.x + self.size: return False
+        elif self.pos.y + self.size < hitbox.pos.y: return False
+        elif self.pos.y > hitbox.pos.y + self.size: return False
+        return True
+
+    # checks if a point is inside the hitbox
+    def intersect(self, p):
+
+        if p.x < self.pos.x: return False
+        if p.x > self.pos.x + self.size: return False
+        if p.y < self.pos.y: return False
+        if p.y > self.pos.y + self.size: return False
         return True
 
     def update(self, pos):
