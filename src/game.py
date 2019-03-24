@@ -7,6 +7,7 @@ from enum import IntEnum
 from vectors import Vector
 from tileEngine import Tilesheet
 from tileEngine import Tilemap
+from tileEngine import Tile
 import entities
 from entities   import Entity
 from entities   import Player
@@ -73,8 +74,8 @@ class Game:
     TITLE_BG_SRC = simplegui._load_local_image("../assets/menus/title_menu/title_background.png")
     TITLE_BG = StaticImage(TITLE_BG_SRC)
 
-    LIVES_ICON_SRC = simplegui._load_local_image("../assets/ui/lives_icon_16x16.png")
-    LIVES_ICON = StaticImage(LIVES_ICON_SRC)
+    LIVES_ICON_SRC = simplegui._load_local_image("../assets/sprite_sheets/entities.png")
+    LIVES_ICON = Tile(LIVES_ICON_SRC, [0, 27], [3, 27], True, 0, 15)
 
     PAUSE_BG_SRC = simplegui._load_local_image("../assets/menus/pause_menu/pause_background.png")
     PAUSE_BG = StaticImage(PAUSE_BG_SRC)
@@ -245,7 +246,7 @@ class Game:
             canvas.draw_text("x " + str(self.lives), (32, 20), 16, "lime", "monospace")
             canvas.draw_text("score: " + str(self.score), (280, 20), 16, "lime", "monospace")
             canvas.draw_text("time: " + str(self.time // 60), (520, 20), 16, "lime", "monospace")
-            Game.LIVES_ICON.draw(canvas, (16, 16))
+            Game.LIVES_ICON.draw(canvas, 16, 16)
 
             # draw death overlay when neeeded
             if Entity.entities[0].dead:
@@ -291,7 +292,7 @@ class Game:
             #todo: will need to change shit here that happens up there
             # turns out being lazy before creates more work now...WHO KNEW!??
             canvas.draw_text("x " + str(self.lives), (32, 20), 16, "lime", "monospace")
-            Game.LIVES_ICON.draw(canvas, (16, 16))
+            Game.LIVES_ICON.draw(canvas, 16, 16)
 
             #draw menu overlay
             Game.PAUSE_BG.draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
@@ -329,6 +330,7 @@ class Game:
         self.mouse.reset()
         if self.state != GameState.PAUSE:
             self.clock.tick()
+            Game.LIVES_ICON.updated = False
             if self.time > 0:
                 self.time -= 1
 
