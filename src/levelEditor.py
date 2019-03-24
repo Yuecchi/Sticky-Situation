@@ -33,7 +33,6 @@ TILE_TYPE = ["EMPTY", "SOLID", "ICY", "LEFT_FENCE", "RIGHT_FENCE", "CONVEYOR_UP"
              "CONVEYOR_DOWN", "CONVEYOR_RIGHT", "SPIKES", "OPEN_PIT", "CLOSED_PIT", "GLUE", "UP_FENCE",
              "FIRE", "FAN", "WATER", "LASER", "GHOST", "GOAL"]
 
-level_name = "_default"
 level_loaded = False
 
 class SquareTile:
@@ -1154,20 +1153,21 @@ def init_entity_grid():
 
 
 def i_save():
-    name = level_name
+    global game
+    name = game._game.editor_level
     if name[0] == '_':
         name = name[1:]
     save(name)
 
 
 def save(name):
-    global level_name
+    global game
     if len(name) == 0:
         return
     if name[0] == "_":  # If it starts with an underscore, it's a in-built level, can't be replaced
         return
 
-    level_name = name
+    game._game.editor_level = name
     file = open("../assets/levels/" + name + ".txt", "wt+")
     expFile.set_text("")
     # write tilesheet path
@@ -1235,7 +1235,7 @@ def list_csv_big(buffer):
 
 
 def load_level(path):
-    global level_tile_grid, level_entity_grid, level_name, level_loaded
+    global level_tile_grid, level_entity_grid, level_loaded, game
 
     try:
         file = open('../assets/levels/' + path + '.txt', "rt")
@@ -1249,7 +1249,7 @@ def load_level(path):
     if tools.entityState.state == 1:
         inputs.editSwap()
 
-    level_name = path
+    game._game.editor_level = path
     # read source tilesheet path
     load_tileSheet(file.readline().strip("\n"))
 
@@ -1358,11 +1358,11 @@ level_entity_grid = 0
 tile_grid = 0
 entity_grid = 0
 inputs = Input()
-load_level(level_name)
+load_level(game._game.editor_level)
 
 
 def play():
-    game._game.launch_sandbox(level_name)
+    game._game.launch_sandbox()
     game._game.close = False
     frame.stop()
 play_button = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 100), (100, 40), "Play", play)
