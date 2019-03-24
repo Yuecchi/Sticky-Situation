@@ -130,6 +130,7 @@ class Game:
         self.lives = 0
         self.score = 0
         self.time  = 0 # time will be loaded from level I guess
+        self.editor_level = "_default"
 
         self.win_quote = 0
 
@@ -170,11 +171,11 @@ class Game:
     def launch_editor(self):
         self.change_state(GameState.EDITOR)
 
-    def launch_sandbox(self, level_name):
+    def launch_sandbox(self):
         self.lives = 10
         self.score = 0
-        self.time  = 300 * 60 #todo: temporary time setter for testing COPIED
-        level.load_level("../assets/levels/" + level_name + ".txt")
+        self.time  = 300 * 60 # todo: temporary time setter for testing COPIED
+        level.load_level("../assets/levels/" + self.editor_level + ".txt")
         self.inSandbox = True
         self.change_state(GameState.GAME)
 
@@ -254,9 +255,9 @@ class Game:
                 projectile.draw(canvas)
 
             # display ui
-            canvas.draw_text("x " + str(self.lives), (32, 20), 16, "red", "monospace")
-            canvas.draw_text("score: " + str(self.score), (280, 20), 16, "red", "monospace")
-            canvas.draw_text("time: " + str(self.time // 60), (520, 20), 16, "red", "monospace")
+            canvas.draw_text("x " + str(self.lives), (32, 20), 16, "lime", "monospace")
+            canvas.draw_text("score: " + str(self.score), (280, 20), 16, "lime", "monospace")
+            canvas.draw_text("time: " + str(self.time // 60), (520, 20), 16, "lime", "monospace")
             Game.LIVES_ICON.draw(canvas, 16, 16)
 
             # draw death overlay when neeeded
