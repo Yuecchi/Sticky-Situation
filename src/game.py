@@ -74,6 +74,9 @@ class Game:
     TITLE_BG_SRC = simplegui._load_local_image("../assets/menus/title_menu/title_background.png")
     TITLE_BG = StaticImage(TITLE_BG_SRC)
 
+    SANS_BG_SRC = simplegui._load_local_image("../assets/menus/title_menu/title_ness_background.png")
+    SANS_BG = StaticImage(SANS_BG_SRC)
+
     LIVES_ICON_SRC = simplegui._load_local_image("../assets/sprite_sheets/entities.png")
     LIVES_ICON = Tile(LIVES_ICON_SRC, [0, 27], [3, 27], True, 0, 15)
 
@@ -133,6 +136,7 @@ class Game:
         self.mouse = handlers.mouse
         self.title_menu = menu.title_menu
         self.pause_menu = menu.pause_menu
+        self.sans = False
 
         self.close = True
 
@@ -142,8 +146,8 @@ class Game:
     def start(self):
         self.lives = 100
         self.score = 0
-        self.time  = 300 * 60 #todo: temporary time setter for testing
-        level.load_level("../assets/levels/_level1.txt")
+        self.time  = 300 * 60  # todo: temporary time setter for testing
+        level.load_level("../assets/levels/official/_jebaited.txt")
         self.change_state(GameState.GAME)
         self.music = Game.MUSIC[randint(0, 5)]
 
@@ -208,7 +212,14 @@ class Game:
         if self.state == GameState.TITLE:
             Game.TITLE_MUSIC.play()
             # display tile screen background image
-            Game.TITLE_BG.draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
+            if handlers.keyboard.p:
+                self.sans = not self.sans
+                handlers.keyboard.p = False
+
+            if self.sans:
+                Game.SANS_BG.draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
+            else:
+                Game.TITLE_BG.draw(canvas, (FRAMEWIDTH / 2, FRAMEHEIGHT / 2))
 
             # check for menu option interaction
             self.title_menu.update(self.mouse)
@@ -243,9 +254,9 @@ class Game:
                 projectile.draw(canvas)
 
             # display ui
-            canvas.draw_text("x " + str(self.lives), (32, 20), 16, "lime", "monospace")
-            canvas.draw_text("score: " + str(self.score), (280, 20), 16, "lime", "monospace")
-            canvas.draw_text("time: " + str(self.time // 60), (520, 20), 16, "lime", "monospace")
+            canvas.draw_text("x " + str(self.lives), (32, 20), 16, "red", "monospace")
+            canvas.draw_text("score: " + str(self.score), (280, 20), 16, "red", "monospace")
+            canvas.draw_text("time: " + str(self.time // 60), (520, 20), 16, "red", "monospace")
             Game.LIVES_ICON.draw(canvas, 16, 16)
 
             # draw death overlay when neeeded
@@ -289,8 +300,9 @@ class Game:
                 projectile.draw(canvas)
 
             # display ui
-            #todo: will need to change shit here that happens up there
+            # todo: will need to change shit here that happens up there
             # turns out being lazy before creates more work now...WHO KNEW!??
+            # comment convos ftw
             canvas.draw_text("x " + str(self.lives), (32, 20), 16, "lime", "monospace")
             Game.LIVES_ICON.draw(canvas, 16, 16)
 

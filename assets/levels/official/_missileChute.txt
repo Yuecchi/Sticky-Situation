@@ -24,3 +24,4 @@ ENTITIES_START
 ENTITIES_END
 CONTACTS_START
 CONTACTS_END
+../assets/levels/official/_trifecta.txt

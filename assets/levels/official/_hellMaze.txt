@@ -61,3 +61,5 @@ CONTACTS_START
 17,12,5
 18,10
 CONTACTS_END
+
+../assets/levels/official/_minefield.txt

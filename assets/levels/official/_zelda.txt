@@ -39,3 +39,4 @@ CONTACTS_START
 14,19
 15,20
 CONTACTS_END
+../assets/levels/official/_lavaBasement.txt
