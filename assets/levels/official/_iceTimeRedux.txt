@@ -31,5 +31,4 @@ CONTACTS_START
 6,9
 10,11
 CONTACTS_END
-
 ../assets/levels/official/_zelda.txt

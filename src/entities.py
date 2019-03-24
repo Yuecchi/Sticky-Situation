@@ -169,6 +169,7 @@ class Player(Entity):
     WATER_DEATH_SOUND = simplegui._load_local_sound('../assets/entities/water_death.wav')
     FAN_DEATH_SOUND = simplegui._load_local_sound('../assets/entities/fan_death.wav')
     GLUE_DEATH_SOUND = simplegui._load_local_sound('../assets/entities/glue_death.wav')
+    FIRE_DEATH_SOUND = simplegui._load_local_sound('../assets/entities/fire_death.ogg')
 
     def __init__(self, pos):
 
@@ -697,6 +698,7 @@ class Player(Entity):
                     self.sprite.set_animation(([0, 17], [3, 17]), 10)
                 elif last_state == PlayerState.IDLE_RIGHT:
                     self.sprite.set_animation(([0, 18], [3, 18]), 10)
+                Player.FIRE_DEATH_SOUND.play()
             elif death == PlayerDeath.FAN:
                 self.sprite.set_animation(([0, 19], [6, 19]), 10)
                 Player.FAN_DEATH_SOUND.play()
@@ -723,6 +725,7 @@ class Player(Entity):
         game._game.level.reset_level()
         self.pos = self.spawn
         self.destination = self.pos
+        self.hitbox.update(self.pos)
         map_entity(self)
 
     def update(self): # player update method
@@ -810,6 +813,7 @@ class PushBlock(Entity):
         self.stuck = False
         self.sprite.set_animation(([0, 0], [0, 0]), 1)
         self.destination = self.pos
+        self.hitbox.update(self.pos)
         self.direction = None
 
     def check_current_tile(self, current_tile):

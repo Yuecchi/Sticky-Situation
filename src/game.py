@@ -117,7 +117,10 @@ class Game:
         simplegui._load_local_sound("../assets/levels/music/carmina.ogg"),
         simplegui._load_local_sound("../assets/levels/music/holst.ogg"),
         simplegui._load_local_sound("../assets/levels/music/toccata.ogg"),
-        simplegui._load_local_sound("../assets/levels/music/valkyrie.ogg")
+        simplegui._load_local_sound("../assets/levels/music/china.ogg"),
+        simplegui._load_local_sound("../assets/levels/music/strauss.ogg"),
+        simplegui._load_local_sound("../assets/levels/music/rossini.ogg"),
+        simplegui._load_local_sound("../assets/levels/music/brahms.ogg"),
     )
 
     def __init__(self):
@@ -149,7 +152,7 @@ class Game:
         self.time  = 300 * 60  # todo: temporary time setter for testing
         level.load_level("../assets/levels/official/_jebaited.txt")
         self.change_state(GameState.GAME)
-        self.music = Game.MUSIC[randint(0, 5)]
+        self.music = Game.MUSIC[randint(0, len(Game.MUSIC) - 1)]
 
     def next_level(self):
         self.score += (self.time // 60)
@@ -254,9 +257,9 @@ class Game:
                 projectile.draw(canvas)
 
             # display ui
-            canvas.draw_text("x " + str(self.lives), (32, 20), 16, "red", "monospace")
-            canvas.draw_text("score: " + str(self.score), (280, 20), 16, "red", "monospace")
-            canvas.draw_text("time: " + str(self.time // 60), (520, 20), 16, "red", "monospace")
+            canvas.draw_text("x " + str(self.lives), (32, 20), 16, "lime", "monospace")
+            canvas.draw_text("SCORE: " + str(self.score), (280, 20), 16, "lime", "monospace")
+            canvas.draw_text("TIME: " + str(self.time // 60), (520, 20), 16, "lime", "monospace")
             Game.LIVES_ICON.draw(canvas, 16, 16)
 
             # draw death overlay when neeeded

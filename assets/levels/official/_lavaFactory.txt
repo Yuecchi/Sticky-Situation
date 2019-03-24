@@ -53,5 +53,4 @@ CONTACTS_START
 16,5
 16,6
 CONTACTS_END
-
 ../assets/levels/official/_missileChute.txt
