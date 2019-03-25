@@ -1651,6 +1651,7 @@ class Scientist(Entity):
         self.direction = Vector()
         self.speed = Scientist.WALK_SPEED
 
+    # set and initilizes the patrol route of a scientist
     def set_patrol(self, patrol):
         self.patrol = patrol
         direction = (self.patrol - self.pos).normalize()
@@ -1664,6 +1665,8 @@ class Scientist(Entity):
         elif direction == Vector((1, 0)):
             self.change_state(ScientistState.WALK_RIGHT)
 
+    # changes the direction of the scientist so they walk in the
+    # opposite direction to the one they were before
     def change_direction(self):
         direction = self.direction * -1
 
@@ -1676,6 +1679,8 @@ class Scientist(Entity):
         elif direction == Vector((1, 0)):
             self.change_state(ScientistState.WALK_RIGHT)
 
+    # determines how the scientist behaves in each different state
+    # essentially just determines walk direction and animations
     def change_state(self, state):
 
         def walk_up(self):
@@ -1708,6 +1713,7 @@ class Scientist(Entity):
 
         states[state](self)
 
+    # determines how the scientist behaves when it comes into contact with different entities
     def check_entity(self, entity): # scientist check entity method
 
         def player(self, entity):
@@ -1778,6 +1784,7 @@ class Scientist(Entity):
 
         return entities[entity.ENTITY_TYPE](self, entity)
 
+    # resets the scientist to its spawn location
     def reset(self):
         self.pos = self.spawn
         self.set_patrol(self.patrol)
@@ -1810,6 +1817,7 @@ class Scientist(Entity):
         # move into new location on entity map
         game._game.level.entitymap[self.pos.y][self.pos.x] = self.id
 
+    # checks if the player is in attack range and kills the player if so
     def check_player(self):
         player = Entity.entities[0]
         dist = player.pos - self.pos
@@ -1823,12 +1831,14 @@ class Scientist(Entity):
 
         if self.moving:
 
+            # moves the scientist forward to its target destination
             if self.pos != self.destination:
                 self.pos += (self.direction * self.speed)
             else:
                 self.pos.to_int()
                 self.update_entitymap_pos()
 
+                # switches direction when the patrol point has been reached
                 if self.pos == self.patrol:
                     self.change_direction()
                 elif self.pos == self.spawn:
@@ -1860,19 +1870,22 @@ class MissileLauncher(Entity):
         self.img = MissileLauncher.SPRITESHEET
         self.sprite = Sprite(self.img)
 
-        self.range = 5
-        self.fuse  = 10
-        self.range_sq = self.range * self.range
-        self.fired = False
-        self.angle = 0
+        self.range = 5 # the range for how close the player must be before the launcher will open fire
+        self.fuse  = 10 # the timer for how long the launcher's missiles will last
+        self.range_sq = self.range * self.range # pre calculated squared range to speed up range checks
+        self.fired = False #  a flag indicating whether or not the launcher has a missile currently active
+        self.angle = 0 # the direction the launcher is facing
 
+    # set the range for how close the player must be before the launcher will open fire
     def set_range(self, range):
         self.range = range
         self.range_sq = self.range * self.range
 
+    # set the timer for how long the launcher's missiles will last
     def set_fuse(self, fuse):
         self.fuse = fuse
 
+    # checks if the player is in firing in range
     def check_range(self, player):
         dist_vec = player.pos - self.pos
         distance = dist_vec.dot(dist_vec)
@@ -1880,10 +1893,13 @@ class MissileLauncher(Entity):
             return True
         return False
 
+    # rotate the missile launcher to face towards the player
     def face_player(self, player, direction):
         angle = direction.angle()
         self.angle = angle
 
+    # checks if the player is in range and fires if a missile if there
+    # isn't already one currently active from the missile launcher
     def update(self):
         player = Entity.entities[0]
         if not player.dead:
@@ -1918,13 +1934,13 @@ class MissileLauncher(Entity):
 # all projectiles ragardless of their type
 class Projectile:
 
-    projectiles = []
+    projectiles = [] #list of all currently active projectiles
 
     def __init__(self, pos, direction):
 
-        self.pos = pos
-        self.direction = direction.normalize()
-        self.hitbox = Hitbox(pos, 0.6)
+        self.pos = pos # projectiles current position
+        self.direction = direction.normalize() # projectiles direction / velocity vector
+        self.hitbox = Hitbox(pos, 0.6) # projectiles hitbox
 
         Projectile.projectiles.append(self)
 
