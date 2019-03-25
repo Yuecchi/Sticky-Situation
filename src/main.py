@@ -22,12 +22,16 @@ def make_frame():
     if game._game.state == game.GameState.EDITOR:
         game._game.change_state(game.GameState.TITLE)
 
+    # displays text on the frame indiciating what the
+    # controls of the game are
     frame.add_label("CONTROLS")
     frame.add_label("")
     frame.add_label("Press the WASD keys to move")
     frame.add_label("")
     frame.add_label("Press M to interact with")
     frame.add_label("buttons and levers")
+    frame.add_label("")
+    frame.add_label("Press P to open the menu")
 
     frame.start()
 

@@ -743,9 +743,10 @@ class Player(Entity):
                 # action button
                 if handlers.keyboard.m:
                     trigger_location = self.pos + self.direction
-                    entity = get_entity(trigger_location)
-                    if entity:
-                        self.check_trigger(entity)
+                    if self.in_bounds(trigger_location):
+                        entity = get_entity(trigger_location)
+                        if entity:
+                            self.check_trigger(entity)
 
                     handlers.keyboard.m = False
 
