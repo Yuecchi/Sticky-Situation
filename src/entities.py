@@ -16,33 +16,47 @@ TILESIZE = tileEngine.TILESIZE
 HALFSIZE = tileEngine.HALFSIZE
 TILE_DIMS = tileEngine.TILE_DIMS
 
+# the sprite class handles all drawing of in game entities and animated
+# images which are not tiles
 class Sprite:
 
     def __init__(self, img):
+
+        # sources image and dimensions
         self.img = img
         self.cols = self.img.get_width() / TILESIZE
 
-        self.animation = ([0, 0], [0, 0])
-        self.animation_speed = 1
-        self.current_index = self.animation[0].copy()
+        self.animation = ([0, 0], [0, 0]) # stores the current set of animation frames to be looped over
+        self.animation_speed = 1 # stores the current animation speed
+        self.current_index = self.animation[0].copy() # stores the current animation frame to be drawn
+        # determines whether or not the current set of animation frames will be looped over
+        # or cycled through a single time
         self.loop_animations = True
 
+    # sets the current set of animation frames and the animation speed
     def set_animation(self, animation, speed):
         self.animation = animation
         self.current_index = self.animation[0].copy()
         self.animation_speed = speed
 
+    # set the animation speed
     def set_animation_speed(self, speed):
         self.animation_speed = speed
 
+    # draws the sprite
     def draw(self, canvas, map_pos):
+        # grabs the cameras current location
         scroll =  game._game.camera.pos
+        # determines where to draw the sprite on the canvas
         pos = (HALFSIZE + ((map_pos.x - scroll.x) * TILESIZE), HALFSIZE + ((map_pos.y - scroll.y) * TILESIZE))
+        # determines which animation frame to draw
         src_pos = (HALFSIZE + (self.current_index[0] * TILESIZE), HALFSIZE + (self.current_index[1] * TILESIZE))
         canvas.draw_image(self.img, src_pos, TILE_DIMS, pos, TILE_DIMS)
 
+        # cycles through an animations frames
         if game._game.clock.transition(self.animation_speed): self.next_frame()
 
+    # special draw method for drawing rotating sprites. works the same, but allows for rotation
     def rot_draw(self, canvas, map_pos, angle):
         scroll =  game._game.camera.pos
         pos = (HALFSIZE + ((map_pos.x - scroll.x) * TILESIZE), HALFSIZE + ((map_pos.y - scroll.y) * TILESIZE))
@@ -51,6 +65,7 @@ class Sprite:
 
         if game._game.clock.transition(self.animation_speed): self.next_frame()
 
+    # determines the sprites next animation frame
     def next_frame(self):
         if self.current_index == self.animation[1]:
             if self.loop_animations:
@@ -61,11 +76,22 @@ class Sprite:
             self.current_index[0] = (self.current_index[0] + 1) % self.cols
             if self.current_index[0] == 0: self.current_index[1] += 1
 
+# The super class Entity is responsible for all in game objects which aren't tiles and projectiles
+# so this includes doors, triggers and anything which moves (player, pushblock etc) besides projectiles
+# The entity class contains all the basic data attributes and methods which all entities should has, such as
+# a position vector and a draw / update method
 class Entity:
 
+    # stores all entities in the current level. This allows
+    # entities to be referenced by an index which is assigned to them
+    # upon creating, and accessed via the entity map
     entities = []
-    next_id = 1
+    next_id = 1 # stores the id of the next entity to be created
 
+    # rearranged lists of entities for various purposes, for example the
+    # order in which entities are updated, is different to the order in which
+    # they are drawn. A list of moveable entities is also stored to make
+    # certain checks faster
     entity_updates = []
     entity_drawing = []
     entity_moveable = []
@@ -75,21 +101,23 @@ class Entity:
         # assign unique id to new entity and place it in the entity map
         self.id = Entity.next_id
         game._game.level.entitymap[pos.y][pos.x] = self.id
-
         Entity.next_id += 1
-        self.pos = pos
-        self.spawn = pos
-        self.img = None
-        self.sprite = None
-        self.isTrigger = False
-        self.isDoor = False
 
-        self.dead = False
-        self.dont_draw = False
+        self.pos = pos # position vector of an entitiy, which is a grid reference
+        self.spawn = pos # the spawn location of an entitiy. This is where the entity resets on player death
+        self.img = None # the source image for an entitiy
+        self.sprite = None # the sprite obbject of an entity, enabling drawing an animations of the entity
+        self.isTrigger = False # true when an entity is also a trigger
+        self.isDoor = False # true when an entity is also a door
+
+        self.dead = False # keep track of whether or not an entity is dead or alive
+        self.dont_draw = False # keeps track of whether or not an entity needs to be drawn
 
         # add to list of entities
         Entity.entities.append(self)
 
+    # method used to check if a given position is within the confines of the current
+    # games tile map (the playable area)
     def in_bounds(self, pos):
         if not pos.x >= 0 or not pos.x < len(game._game.level.tilemap.map[0]):
             return False
@@ -98,29 +126,38 @@ class Entity:
         else:
             return True
 
+    # cross checks the destinations of moveable entities
+    # this is done to detect if two enities are moving into the
+    # same square at the same time
     def check_destination(self):
         for entity in Entity.entity_moveable:
             if entity == self: continue
             if entity.moving:
+                # when detected, one of the two entities is sent back to where it was coming from
                 if self.destination == entity.destination:
                     self.destination -= self.direction
                     self.direction *= -1
                     return False
         return True
 
+    # empty method ( an idea which was never implemented)
     def reset(self):
         pass
 
+    # empty method ( I believe this might actually be redundant?)
     def trigger(self):
         pass
 
+    # empty method ( simplifies looping through entity update methods)
     def update(self):
         pass
 
+    # a general draw method for all entities
     def draw(self, canvas):
         if not self.dont_draw:
             self.sprite.draw(canvas, self.pos)
 
+    # a general method for storing entitiy data externally
     def save_data(self):
         string = str(self.ENTITY_TYPE) + "," + str(self.spawn).strip("()")
         return string
@@ -128,9 +165,12 @@ class Entity:
     def contact_data(self):
         pass
 
+    # method used as a debug tool
     def display(self):
         return str(self.ENTITY_TYPE)
 
+# list of player states, which determine how the player
+# will move and be animated / if the player is alive or dead
 class PlayerState(IntEnum):
 
     IDLE_UP     = 0
@@ -147,6 +187,8 @@ class PlayerState(IntEnum):
     JUMP_RIGHT  = 11
     DEAD        = 12
 
+# list of player deaths which determine which
+# death animation / sound to play
 class PlayerDeath(IntEnum):
 
     SPIKE = 0
@@ -156,6 +198,7 @@ class PlayerDeath(IntEnum):
     WATER = 4
     GHOST = 5
 
+# the player class
 class Player(Entity):
 
     ENTITY_TYPE = 1
@@ -1854,7 +1897,7 @@ class MissileLauncher(Entity):
 
     def draw(self, canvas):
 
-        # TODO: not actually faster in cases where there aren't that many entities being draw off screen
+        # only draws when on screen
         left = int(game._game.camera.pos.x)
         if self.pos.x < left : return
         if self.pos.x > min(left + int(tileEngine.MAX_TILES_X) + 1, len(game._game.level.tilemap.map[0])): return
@@ -1865,10 +1908,14 @@ class MissileLauncher(Entity):
 
         self.sprite.rot_draw(canvas, self.pos, self.angle)
 
+    # generates a save data string for the missile launcher
     def save_data(self):
         string = str(self.ENTITY_TYPE) + "," + str(self.spawn).strip("()") + "," + str(self.range) + "," + str(self.fuse)
         return string
 
+# base class for projectiles. Stores all currently active projectiles
+# and provides a direction and position vector, as well as a hitbox for
+# all projectiles ragardless of their type
 class Projectile:
 
     projectiles = []
@@ -1881,6 +1928,7 @@ class Projectile:
 
         Projectile.projectiles.append(self)
 
+# explodes all currently active missiles
 def clear_missiles():
     for missile in Projectile.projectiles:
         missile.explode()
@@ -1888,10 +1936,10 @@ def clear_missiles():
 class Missile(Projectile):
 
     SPRITESHEET = simplegui._load_local_image("../assets/entities/missile.png")
-    SPEED = 1 / 64
+    SPEED = 1 / 64 # missiles movement speed
     EXPLODE_SOUND = simplegui._load_local_sound("../assets/entities/boom1.wav")
 
-    # pre calculate angles
+    # pre calculate angles to save processing on collisions later
     CENTER       = Vector((17, 15))
     TOP_LEFT     = (Vector((0 , 12)) - CENTER).angle()
     TOP_RIGHT    = (Vector((31, 12)) - CENTER).angle()
@@ -1903,21 +1951,24 @@ class Missile(Projectile):
 
         Projectile.__init__(self, pos, direction)
 
+        # source image for the missile
         self.img = Missile.SPRITESHEET
         self.sprite = Sprite(self.img)
 
-        self.launcher = launcher
-        self.angle = 0
-        self.timer = launcher.fuse
-        self.time = self.timer * 60
+        self.launcher = launcher # the missile launcher which fired the missile
+        self.angle = 0 # the current direction the missile is facing and moving
+        self.timer = launcher.fuse # the maximum amount of time the missile can be active for
+        self.time = self.timer * 60 # the amount fo time left before the missile explodes
 
-        self.exploded = False
+        self.exploded = False # tracks whether the missile has exploded or not
 
+    # determines which way the missile should flay based on the players location relative to the missile's
     def get_direction(self):
         player = Entity.entities[0]
         self.direction = (player.pos - self.pos).normalize()
         self.angle = self.direction.angle()
 
+    # has the missile explode. plays the exploding sound and animation and sets the eploded flag to true
     def explode(self):
         self.sprite.set_animation(([1, 0], [8, 0]), 5)
         self.sprite.loop_animations = False
@@ -1929,7 +1980,7 @@ class Missile(Projectile):
         # get the true center position of the missile
         pos = Vector((HALFSIZE + (self.pos.x * TILESIZE), HALFSIZE + (self.pos.y * TILESIZE)))
 
-        # calculate contact points
+        # calculate contact points (these are used to find if the missile has hit anything solid)
         contact_points = [
             (pos + Vector((math.cos(Missile.TOP_LEFT     + self.angle), math.sin(Missile.TOP_LEFT     + self.angle))) * Missile.LENGTH).to_grid(),
             (pos + Vector((math.cos(Missile.TOP_RIGHT    + self.angle), math.sin(Missile.TOP_RIGHT    + self.angle))) * Missile.LENGTH).to_grid(),
@@ -1937,12 +1988,14 @@ class Missile(Projectile):
             (pos + Vector((math.cos(Missile.BOTTOM_RIGHT + self.angle), math.sin(Missile.BOTTOM_RIGHT + self.angle))) * Missile.LENGTH).to_grid()
         ]
 
+        # the missile explodes if it comes into contact with any solid tiles
         for p in contact_points:
             tile = tileEngine.get_tile(p)
             if tile.type == TileType.SOLID:
                 self.explode()
                 return
 
+            # the missile explodes if it comes into contact with any doors
             entity = get_entity(p)
             if entity:
                 if entity.isDoor:
@@ -1966,6 +2019,7 @@ class Missile(Projectile):
 
     def update(self):
 
+        # actions to be performed if the missile has yet to explode
         if not self.exploded:
             # check missile timer
             if self.time > 0:
@@ -1973,11 +2027,13 @@ class Missile(Projectile):
             else:
                 self.explode()
 
+        # actions to be performed if the missile has yet to explode
         if not self.exploded:
             # check for collisions with walls
             self.get_direction()
             self.check_collisions()
 
+        # actions to be performed if the missile has already exploded
         if self.exploded:
             # check if the explosion animation has finished
             if self.sprite.current_index == [8, 0]:
@@ -1991,9 +2047,11 @@ class Missile(Projectile):
         self.pos += (self.direction * Missile.SPEED)
         self.hitbox.update(self.pos)
 
+    # draws and rotate the missile
     def draw(self, canvas):
         self.sprite.rot_draw(canvas, self.pos, self.angle)
 
+# hitboxes are used to detect collisions between certain entities
 class Hitbox:
 
     #SIZE = TILESIZE * 0.6
@@ -2020,9 +2078,11 @@ class Hitbox:
         if p.y > self.pos.y + self.size: return False
         return True
 
+    # repositions the hitbox given a position vector
     def update(self, pos):
         self.pos = (pos * TILESIZE) - Vector((HALFSIZE, HALFSIZE))
 
+# retrieves an entities id via it's position in the entity map
 def get_entity(pos):
     entity_id = game._game.level.entitymap[pos.y][pos.x]
     if bool(entity_id):
@@ -2030,8 +2090,10 @@ def get_entity(pos):
     else:
         return False
 
+# place an entity within the entity map
 def map_entity(entity):
     game._game.level.entitymap[entity.pos.y][entity.pos.x] = entity.id
 
+# remove an entity from the entity map
 def unmap_entity(entity):
     game._game.level.entitymap[int(entity.pos.y)][int(entity.pos.x)] = 0
