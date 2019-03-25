@@ -1,19 +1,20 @@
+# IMPORTS
 try:
     import simplegui
 except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
 
-import game
-import level
-from tileEngine import Tile
+import game  # To access the globally used clock and persist current working state
+from tileEngine import Tile  # This is needed to ensure the tiles are compatible with the playable game
 from vectors import Vector
+# IMPORTS END
+# CONSTANTS
+CANVAS_DIMS = [900, 600]  # Size of the canvas
+TILE_SIZE = 32  # Default size of each tile
 
-CANVAS_DIMS = [900, 600]
-TILE_SIZE = 32
+EDITOR_MUSIC = simplegui._load_local_sound("../assets/levels/music/editor.ogg")  # Music to be played when editing levels
 
-EDITOR_MUSIC = simplegui._load_local_sound("../assets/levels/music/editor.ogg")
-
-ENTITY_IMG = simplegui._load_local_image('../assets/sprite_sheets/entities.png')
+ENTITY_IMG = simplegui._load_local_image('../assets/sprite_sheets/entities.png')  # Entities spritesheet
 ENTITY_SRC_POS = [(4.5*TILE_SIZE, 20.5*TILE_SIZE),  # Blank - 0
                   (0.5*TILE_SIZE, 18.5*TILE_SIZE),  # Player - 1
                   (13.5*TILE_SIZE, 18.5*TILE_SIZE),  # Block - 2
@@ -27,16 +28,28 @@ ENTITY_SRC_POS = [(4.5*TILE_SIZE, 20.5*TILE_SIZE),  # Blank - 0
                   (12.5*TILE_SIZE, 24.5*TILE_SIZE),  # Timer HorDoor - 10
                   (15.5*TILE_SIZE, 14.5*TILE_SIZE),  # Scientist - 11
                   (0.5*TILE_SIZE, 20.5*TILE_SIZE)]  # Missile Launcher - 12
+# Defines whether the entity is a trigger or not
 ENTITY_TRIGGER = [False, False, False, True, True, True, True, False, False, False, False, False, False]
+# Defines whether the entity can be timed or not (and its default time)
 ENTITY_TIMER = [None, None, None, None, 5, None, None, None, None, 5, 5, None, 5]
+# Defines whether the entity can be the target of a trigger or not
 ENTITY_TARGET = [False, False, False, False, False, True, False, True, True, True, True, False, False]
+# Defines whether the entity has special extra values specific to it
 ENTITY_OTHER = [None, None, None, None, None, None, None, None, None, None, None, [0, 0], [3]]
+# Defines what the type id of a tile represents and how it should behave
 TILE_TYPE = ["EMPTY", "SOLID", "ICY", "LEFT_FENCE", "RIGHT_FENCE", "CONVEYOR_UP", "CONVEYOR_LEFT",
              "CONVEYOR_DOWN", "CONVEYOR_RIGHT", "SPIKES", "OPEN_PIT", "CLOSED_PIT", "GLUE", "UP_FENCE",
              "FIRE", "FAN", "WATER", "LASER", "GHOST", "GOAL"]
+# CONSTANTS END
 
-level_loaded = False
+level_loaded = False  # Indicates whether the level is fully loaded yet or not
 
+# Class wrapping the pseudo-tiles used in the grids that form the core of the editor system
+# Different from Tiles in that they can contain entities too, are paint-able and are flexible for editing purposes
+#       x, y   => Position on the screen (Early additions so not vector)
+#       tileNo => Identifies what its contents are and what to draw
+#       points => Precompiled points of the square to allow drawing to take less computation
+#       tile   => Boolean value indicating whether the contents are a tile or entity (used to draw)
 class SquareTile:
     def __init__(self, x, y, tile=True, id=-1):
         self.x = x
@@ -48,19 +61,19 @@ class SquareTile:
                        (self.x, self.y + TILE_SIZE)]
         self.tile = tile
 
-    def paint(self, brush):
+    def paint(self, brush):  # Sets the current tileNo to the selected one (the brush)
         self.tileNo = brush
 
-    def shiftY(self, shift):
+    def shiftY(self, shift):  # Used for shifting in the scroll associated with editing entity configurations
         self.y += shift
         self.points = [(self.x, self.y),
                        (self.x + TILE_SIZE, self.y),
                        (self.x + TILE_SIZE, self.y + TILE_SIZE),
                        (self.x, self.y + TILE_SIZE)]
 
-    def draw(self, canvas):
+    def draw(self, canvas):  # Used to draw its contents appropriately
         if self.tile:  # For tiles
-            if self.tileNo == -1:
+            if self.tileNo == -1:  # If empty tile, don't draw
                 return
             if isinstance(inputs.tile_sheet.tiles[self.tileNo], BigTile):
                 big_in_use = inputs.tile_sheet.tiles[self.tileNo]
@@ -72,12 +85,20 @@ class SquareTile:
             else:
                 inputs.tile_sheet.tiles[self.tileNo].draw(canvas, (TILE_SIZE / 2) + self.x, (TILE_SIZE / 2) + self.y)
         else:  # For entities
-            if self.tileNo == -1:
+            if self.tileNo == -1: # If empty entity, don't draw - separate to allow flexibility on how entities are represented
                 return
             else:
                 pos = ((TILE_SIZE/2) + self.x, (TILE_SIZE/2) + self.y)
                 canvas.draw_image(ENTITY_IMG, ENTITY_SRC_POS[self.tileNo], (TILE_SIZE, TILE_SIZE), pos, (TILE_SIZE, TILE_SIZE))
 
+
+# Class wrapping up the entity information and its attributes into a single object
+# Different to the Entity class used in the game since it isn't interactive and stores attributes differently
+#       pos      => Position of the entity in the grid
+#       type     => Synonymous to tileNo, defines the type of entity being dealt with
+#       trigger, target, timer, extra
+#                => Refer to constants at the top - in brief, it's the entity's attributes other than type
+#       contacts => Stores a list of other FakeEntities which are triggered by this one
 class FakeEntity:
     def __init__(self, pos, type, time_in=-1, extra=[]):
         self.pos = pos
@@ -92,19 +113,19 @@ class FakeEntity:
         if len(extra) == 0:  # If no extra input given, assign default
             self.extra = ENTITY_OTHER[type]
 
-    def addContact(self, contact):
+    def addContact(self, contact):  # Handles the addition of contacts to the entity
         if contact not in self.contacts:
             self.contacts.append(contact)
 
-    def changePos(self, new_pos):
+    def changePos(self, new_pos):  # Updates the position of the entity in the grid
         self.pos = new_pos
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # Defines equality to another FakeEntity (useful for deleting entities autonomously)
         if other is None:
             return False
         return self.pos == other.pos and self.type == other.type
 
-    def remove(self):
+    def remove(self):  # Allows the entity to be untracked and therefore removed from consideration
         # Remove this entity from all contacts
         for entity in inputs.entities:
             if len(entity.contacts) != 0:
@@ -116,7 +137,7 @@ class FakeEntity:
                             entity.contacts.remove(self)
         inputs.entities.remove(self)  # Remove this entity
 
-    def save_data(self):
+    def save_data(self):  # Outputs a csv formatted string containing the type, position, extra and timer of the entity
         out = ""
         if self.type == 1:
             out += str(self.type) + "," + str(self.pos[1]) + "," + str(self.pos[0])
@@ -129,9 +150,10 @@ class FakeEntity:
             out += "," + str(self.timer)
         return out
 
+    # Outputs a csv formatted string containing its id (position in entities array), contact id and a timer on new lines
     def contact_data(self):
         string = ""
-        if self.trigger != -1:
+        if self.trigger:
             for i in range(len(self.contacts)):
                 id = inputs.entities.index(self)
                 other_id = inputs.entities.index(self.contacts[i])
@@ -144,12 +166,15 @@ class FakeEntity:
         return string
 
 
-class BigTile:  # Contains tiles with it, plus animated
+# Class to allow the level editor to recognise and use tiles of size other than 1x1 or those that were animated
+#       tiles  => 2D list containing the individual tileIDs of the tiles it contains
+#       tileNo => Tile number of the big tile itself
+class BigTile:
     def __init__(self, tiles, tile_no):
         self.tiles = tiles
         self.tileNo = tile_no
 
-    def contains(self, tile_no):
+    def contains(self, tile_no):  # Returns true if the tile number being searched for is part of the big tile
         for y in range(len(self.tiles)):
             for x in range(len(self.tiles[0])):
                 if self.tiles[y][x] == tile_no:
@@ -157,7 +182,17 @@ class BigTile:  # Contains tiles with it, plus animated
         return False
 
 
-# Like TileMap
+# Class wrapping up the structure, display and selection mechanisms of the individual square tiles
+# Different to the TileMap class as it is used to draw the palettes, as well as support mouse interaction for painting
+#       hidden, inactive
+#                  => Used to control which grids are shown and are interact-able at any given time
+#       default    => Contains a default value of tile number to initially populate the grid with
+#       isTile     => Boolean value to indicate whether the grid contains entities or tiles
+#       map, tiles => 2D lists of identical dimensions with map storing tileID and tiles storing SquareTile instances
+#       frame, frameStart
+#                  => Used to determine which parts of the grid to show if it was larger than the frame size
+#       x, y       => Used to define the position of the top left corner on the frame
+#       rows, cols => Used for readability and consistency purposes over using len(map) and such
 class Grid:
     def __init__(self, cols=5, rows=5, x=50, y=50, view_frame = (2, 2), default=-1, tile=True, hidden=False, inactive=False, map=[]):
         self.hidden = hidden
@@ -194,15 +229,16 @@ class Grid:
         if len(self.map) == 0:
             self.map = temp_map
 
-    def get_endpoint(self):
+    def get_endpoint(self):  # Gets the position of the bottom right corner of the grid on the canvas
         return (self.tiles[self.frameStart[1] + self.frame[1] - 1][self.frameStart[0] + self.frame[0] - 1].x + TILE_SIZE,
                 self.tiles[self.frameStart[1] + self.frame[1] - 1][self.frameStart[0] + self.frame[0] - 1].y + TILE_SIZE)
 
-    def contains(self, pos):
+    def contains(self, pos):  # Returns a boolean checking whether the point clicked was within the grid while active
         return self.x + TILE_SIZE*self.frameStart[0] < pos[0] < self.get_endpoint()[0] \
                and self.y + TILE_SIZE*self.frameStart[1] < pos[1] < self.get_endpoint()[1] \
                and not self.inactive
 
+    # Returns the SquareTile clicked on or its position in the grid, depending on the value of tile passed
     def get_selected(self, pos, tile=True):
         x = (pos[0] - self.x) // TILE_SIZE
         y = (pos[1] - self.y) // TILE_SIZE
@@ -221,7 +257,8 @@ class Grid:
         else:
             return [y, x]
 
-    def in_selection(self, start, end, indexed=False):  # return a selection of tiles, no assumptions
+    # Returns a list of the SquareTiles within the selected points of the fill constraints
+    def in_selection(self, start, end, indexed=False):
         # take startPos and endPos to find tiles they correspond to
         tile_one = start
         tile_two = end
@@ -237,7 +274,7 @@ class Grid:
                     selected.append(self.tiles[row][col])
         return selected
 
-    def move_frame(self, x, y):
+    def move_frame(self, x, y):  # Moves the frame by an arbitrary amount in any direction as much as possible
         if self.frameStart[0] + self.frame[0] + x <= self.cols and \
            self.frameStart[1] + self.frame[1] + y <= self.rows and \
            self.frameStart[0] + x >= 0 and self.frameStart[1] + y >= 0:
@@ -259,16 +296,17 @@ class Grid:
             elif y < 0:
                 self.move_frame(0, -self.frameStart[1])
 
+    # Extends or truncates the grid to resize it with handling for out of bound entities if it contains them
     def resize(self, input_dims):
-        if input_dims[0] < self.frame[0] or input_dims[1] < self.frame[1]:  # Can remove this
+        if input_dims[0] < self.frame[0] or input_dims[1] < self.frame[1]:  # If the dimensions are valid, continue
             return
-        if self.rows != input_dims[1]:
-            increment = -int((self.rows - input_dims[1]) / abs(self.rows - input_dims[1]))
-            self.move_frame(-self.frameStart[0], -self.frameStart[1])
-            while self.rows != input_dims[1]:
+        if self.rows != input_dims[1]:  # For any changes in the row size
+            increment = -int((self.rows - input_dims[1]) / abs(self.rows - input_dims[1]))  # Calculate if more or less
+            self.move_frame(-self.frameStart[0], -self.frameStart[1])  # Move frame to the top left corner
+            while self.rows != input_dims[1]:  # While new dimensions not acquired, repeat
                 if increment < 0:  # If more rows than wanted
                     self.tiles.pop()  # Pop last row
-                elif increment > 0:
+                elif increment > 0: # If less rows, create a new row and append
                     new_row = []
                     new_grid_row = []
                     for i in range(self.cols):
@@ -280,6 +318,7 @@ class Grid:
                     break
                 self.rows += increment
 
+        # Repeated with columns but variation on how the adding/deleting works due to being columns not nows
         if self.cols != input_dims[0]:
             increment = -int((self.cols - input_dims[0])/abs(self.cols - input_dims[0]))
             while self.cols != input_dims[0]:
@@ -294,6 +333,7 @@ class Grid:
                     break
                 self.cols += increment
 
+        # Checks it the currently selected entity is out of bounds and resets the toolBar if it is
         if toolbar.entity is not None:
             if len(level_entity_grid.tiles) <= toolbar.entity.pos[1] or \
                     len(level_entity_grid.tiles[0]) <= toolbar.entity.pos[0]:  # If outside bounds through resizing
@@ -301,7 +341,7 @@ class Grid:
                 toolbar.displayBox.tileNo = 0
                 toolbar.extra_value = ""
 
-    def draw(self, canvas):
+    def draw(self, canvas):  # Draws the grid according to the frame constraints
         if not self.hidden:
             for y in range(self.frame[1]):
                 if y + self.frameStart[1] < self.rows:
@@ -310,8 +350,30 @@ class Grid:
                             self.tiles[y + self.frameStart[1]][x + self.frameStart[0]].draw(canvas)
 
 
+# Class using the semantic representation of the sprite-sheet in use to make a workable interface for the code's use
+# Different to TileSheet since it encapsulates more data, supports big tiles and is closer to the sprite-sheet itself
+#       map   => Stores the tile number of the tiles in the grid cell space occupied in the sprite-sheet
+#       img   => Stores the image used as the sprite-sheet
+#       tile_index, animation_index
+#             => Stores indexes to generate tiles with the correct tileID and animation speeds
+#       index => Stores the index used to specify if a tile is singular, big or animated
+#       tiles => Stores the tiles generated by the initalize process
+#       cols  => Stores the number of columns in the spritesheet for readability. Rows not needed since doesnt V-wrap
+#       tile_count
+#             => Stores the number of tiles created by the initialization process
 class LevelTileSheet:
     # Use as you would the normal TileSheet but it has support for selecting and exporting big tiles
+
+    # The initialization of this object will read the sprite-sheet and auto-generate the tiles with their data
+    #   given the three indexes corresponding to their size, tile type and their animation speeds
+    # To do this, it labels all 32x32 sprites in the sheet with an ID unique to each static tile/animation
+    # While doing so, it marks spots occupied by big tiles in the below rows with a -1, so the crawler knows when to
+    #   skip those since they are already technically mentioned in the indexes provided
+    # Then, it does a second pass in which only the big tiles are considered and it makes big tiles using the index for
+    #   that purpose, skipping all indexes referring to singular or animated tiles
+    # Finally, it iterates through all the tiles it has created and gives all non-big tiles their appropriate tile type
+    #   and animation speed values, while setting the defaults of a non-animated tile to the big tiles (since they will
+    #   never be in use in the actual game, just in the editor)
     def __init__(self, img_path, tile_index, tile_id_index, animation_speed_index):
         self.map = []
         self.img = simplegui._load_local_image(img_path)
@@ -324,7 +386,6 @@ class LevelTileSheet:
             occupied.append(temp_row.copy())
 
         # TileSheet.__init__(self, img, index) but fills a map in a nested loop
-        self.imgPath = img_path
         self.tile_index = tile_id_index
         self.animation_index = animation_speed_index
         self.index = tile_index
@@ -352,7 +413,6 @@ class LevelTileSheet:
                     col = (start_index[0] + j) % self.cols
                     row = start_index[1] + ((start_index[0] + j) // self.cols)
                     # CASE NOT NEEDED: Case where animation split by big tile __________________________________________
-                    # THIS SHOULD NEVER HAPPEN BUT JUST IN CASE
                     # only do this if not already -1, otherwise while -1, make tile, increment
                     # the original i should be stored though, for finishing the animation
                     self.map[row][col] = self.tile_count
@@ -440,8 +500,7 @@ class LevelTileSheet:
                 self.tiles[tile_i].animation_speed = 1
                 self.tiles[tile_i].type = -1
 
-
-    def printGrid(self):
+    def printGrid(self):  # Prints the grid it generates given the inputs above (mainly for debugging purposes)
         for row in range(len(self.map)):
             current_row = "["
             for col in range(len(self.map[0])):
@@ -455,6 +514,7 @@ class LevelTileSheet:
             print(current_row)
 
 
+# Class wrapping the functionality of a button to external links such as play testing the game or back to the menu
 class Button:
     def __init__(self, pos, size, value, action):
         self.pos = pos
@@ -465,15 +525,23 @@ class Button:
         self.value = value
         self.action = action
 
-    def contains(self, pos):
+    def contains(self, pos):  # Returns a boolean indicating if the button was clicked on
         return self.corners[0][0] <= pos[0] <= self.corners[2][0] and \
                self.corners[0][1] <= pos[1] <= self.corners[2][1]
 
-    def draw(self, canvas):
+    def draw(self, canvas):  # Draws the button on screen with the text specified
         canvas.draw_polygon(self.corners, 2, "Black", "Lime")
         canvas.draw_text(self.value, (self.pos[0] + 30, self.pos[1] + 25), 20, "Black")
 
 
+# Class wrapping the main options to be used by the user, displayed on the bottom with features including:
+#   => Fill mode
+#   => Big tile select mode
+#   => Large pan mode
+#   => Tile picker mode
+#   => Entity/Tile mode
+#   => Entity config editor mode
+#   => Info on the currently selected tile/entity
 class ToolBox:
     def __init__(self, pos, size, display_size=64):
         self.pos = pos
@@ -554,6 +622,7 @@ class ToolBox:
         self.pickState.draw(canvas)
 
 
+# Class wrapping the functionality of a button with multiple states - mostly used in the toolbox and toolbar objects
 class StateBox:
     def __init__(self, pos, size, messages, message_widths=[]):
         self.pos = pos
@@ -570,27 +639,27 @@ class StateBox:
         self.states = len(messages)
         self.disabled = False
 
-    def next(self):
+    def next(self):  # Switches to the next state
         self.state = (self.state + 1) % self.states
         self.display = self.messages[self.state]
 
-    def set(self, in_state):
+    def set(self, in_state):  # Sets to the specified state
         if 0 <= in_state < self.states:
             self.state = in_state
             self.display = self.messages[self.state]
 
-    def contains(self, pos):
+    def contains(self, pos):  # Returns a boolean indicating if it was clicked while not disabled
         return self.pos[0] <= pos[0] <= self.pos[0]+self.size[0] and \
                self.pos[1] <= pos[1] <= self.pos[1]+self.size[1] and not self.disabled
 
-    def flip(self):
+    def flip(self):  # Similar to next but used for those with only two states
         if self.state == 0:
             self.state = 1
         else:
             self.state = 0
         self.display = self.messages[self.state]
 
-    def draw(self, canvas):
+    def draw(self, canvas):  # Draws the button itself, with consideration if it is disabled
         if self.disabled:
             canvas.draw_polygon(self.corners, 2, "Black", "Grey")
         else:
@@ -602,6 +671,12 @@ class StateBox:
             canvas.draw_text(self.display, self.msgPos, 20, "Black")
 
 
+# Class wrapping the main entity selection and configuration subsystem - it includes features such as:
+#   => Allowing info on the selected individual entity to be displayed
+#   => Displaying all contacts of an entity
+#   => Adding/Removing contacts to a selected entity
+#   => Changing the timer for a selected entity
+#   => Setting entity specific attributes
 class ToolBar:
     def __init__(self, pos, size=(150, 460)):
         self.pos = pos
@@ -622,7 +697,7 @@ class ToolBar:
         self.entity = None
         self.list = ListBox((pos[0]+5, pos[1]+115))
 
-    def setEntity(self, entity):
+    def setEntity(self, entity):  # Handles being set an entity and how to change itself
         self.entity = entity
         self.list.contacts = []
         self.list.frameStart = 0
@@ -645,7 +720,7 @@ class ToolBar:
             self.extra_value = ""
             self.displayBox.tileNo = 0
 
-    def addTimer(self, time):
+    def addTimer(self, time):  # Handles the addition of a timer to an entity
         if self.entity is None:
             return False
         if self.entity.timer is not None and time > 0:
@@ -654,7 +729,7 @@ class ToolBar:
         else:
             return False
 
-    def draw(self, canvas):
+    def draw(self, canvas):  # Draws itself onto the screen
         canvas.draw_polygon(self.corners, 2, "Black", "Cyan")
         canvas.draw_text("Selected:", (self.pos[0] + 20, self.pos[1] + 30), 20, "Black")
         if self.entity is not None:
@@ -676,6 +751,7 @@ class ToolBar:
         self.actionButton.draw(canvas)
 
 
+# Class wrapping up the displaying of an entity's contacts
 class ListBox:
     def __init__(self, pos, size=(140, 280)):
         self.pos = pos
@@ -688,7 +764,7 @@ class ListBox:
         self.frameStart = 0
         self.frame = 5
 
-    def addContact(self, contact_entity, new=False):
+    def addContact(self, contact_entity, new=False):  # Handles the addition of a contact to the list
         if toolbar.entity is None:
             return
         if not toolbar.entity.trigger:
@@ -710,7 +786,7 @@ class ListBox:
         self.contacts.append(
             Contact([self.pos[0] + 5, self.pos[1] + (len(self.contacts) * 55) + 5], contact_entity, visible))
 
-    def remove(self, contact_entity):
+    def remove(self, contact_entity):  # Handles the removal of a contact from the list
         # Shift all items up if found
         index = -1
         for i in range(len(self.contacts)):
@@ -736,7 +812,7 @@ class ListBox:
                     contact.shift(55)
             self.contacts.remove(self.contacts[index])
 
-    def click(self, pos):
+    def click(self, pos):  # Handles when the scrolling should be done upon clicking
         if self.pos[0] <= pos[0] <= self.pos[0] + self.size[0] and \
            self.pos[1] <= pos[1] <= self.pos[1] + 10:
             self.scroll(-1)
@@ -744,7 +820,7 @@ class ListBox:
              self.pos[1] + self.size[1] - 10 <= pos[1] <= self.pos[1] + self.size[1]:
             self.scroll(1)
 
-    def scroll(self, mag):
+    def scroll(self, mag):  # Scrolls the contacts of the listbox up and down
         if mag == 1 and self.frameStart + self.frame < len(self.contacts):
             self.contacts[self.frameStart].visible = False
             self.contacts[self.frameStart+self.frame].visible = True
@@ -757,7 +833,7 @@ class ListBox:
         for contact in self.contacts:
             contact.shift(-55*mag)
 
-    def draw(self, canvas):
+    def draw(self, canvas):  # Draws the lsit box onto the scren, considering the frame size
         canvas.draw_polygon(self.corners, 2, "Black", "Grey")
         canvas.draw_polygon([(self.pos[0], self.pos[1]),
                              (self.pos[0] + self.size[0], self.pos[1]),
@@ -772,6 +848,7 @@ class ListBox:
                 self.contacts[i+self.frameStart].draw(canvas)
 
 
+# Class wrapping up the information related to the contacts of an entity and how to display them in the listbox above
 class Contact:
     def __init__(self, pos, entity, visible, size=(130, 50)):
         self.pos = pos
@@ -785,7 +862,7 @@ class Contact:
         self.displayBox = SquareTile(pos[0] + 10, pos[1] + 10, False, entity.type)
         self.clickCount = 0
 
-    def draw(self, canvas):
+    def draw(self, canvas):  # Draws the contact in a rectangular box
         back_colour = "White"
         if self.clickCount != 0:
             back_colour = "Yellow"
@@ -793,7 +870,7 @@ class Contact:
         self.displayBox.draw(canvas)
         canvas.draw_text("Pos: " + str(self.entity.pos), (self.pos[0] + 50, self.pos[1] + 30), 15, "Black")
 
-    def shift(self, shift):
+    def shift(self, shift):  # Used in conjunction with the scroll feature of the listbox
         self.pos[1] += shift
         self.corners = [(self.pos[0], self.pos[1]),
                         (self.pos[0] + self.size[0], self.pos[1]),
@@ -801,13 +878,13 @@ class Contact:
                         (self.pos[0], self.pos[1] + self.size[1])]
         self.displayBox.shiftY(shift)
 
-    def contains(self, pos):
+    def contains(self, pos):  # Returns a boolean indicating when the contact was clicked upon while visible
         if toolbar.entity is None:
             return False
         return self.visible and toolbar.entity.trigger and self.pos[0] <= pos[0] <= self.pos[0]+self.size[0] \
             and self.pos[1] <= pos[1] <= self.pos[1]+self.size[1]
 
-    def click(self, pos):
+    def click(self, pos):  # Handles the contact being clicked (i.e. for deleting or navigating purposes)
         if self.contains(pos):
             self.clickCount += 1
             if self.clickCount == 2:
@@ -822,6 +899,7 @@ class Contact:
         return self.contains(pos)
 
 
+# Class wrapping up the inputs given to the program, mainly consisting of mouse handlers but also the LevelTileSheet
 class Input:
     tile_sheet = 0
     tile_path = ""
@@ -834,7 +912,7 @@ class Input:
         self.selectStart = [0, 0]
         self.selectEnd = [0, 0]
 
-    def click(self, pos):
+    def click(self, pos):  # Activates the click functionality for each object according to the current game state
         if level_tile_grid.contains(pos):
             if tools.pickState.state != 1:
                 if tools.fillState.state == 1:  # Start and end selections
@@ -942,7 +1020,7 @@ class Input:
         if not contacted:
             toolbar.list.click(pos)
 
-    def set_colour(self, pos):
+    def set_colour(self, pos):  # Used to intermediate painting the grid with an entity or tile with validation checks
         if tools.pickState.state == 1:
             return
         if tools.entityState.state == 0:
@@ -982,7 +1060,7 @@ class Input:
                 else:
                     level_entity_grid.tiles[selected[0]][selected[1]].paint(self.brush)  # Add entity to grid
 
-    def editSwap(self):
+    def editSwap(self):  # Handles the swapping of states from entity to tile mode and vice versa
         tools.entityState.flip()
         # Toggles which grids can be interacted with
         level_tile_grid.inactive = not level_tile_grid.inactive
@@ -1007,7 +1085,7 @@ class Input:
         tools.panState.disabled = not tools.panState.disabled
         tools.pickState.disabled = not tools.pickState.disabled
 
-    def fill(self):
+    def fill(self):  # Handles how the fill function works when filling with individual or big tiles
         if tools.fillState.state == 3:  # If filling
             if isinstance(self.tile_sheet.tiles[self.brush], BigTile):
                 big_in_use = self.tile_sheet.tiles[self.brush]
@@ -1028,6 +1106,8 @@ class Input:
                     tile.paint(self.brush)
             tools.fillState.next()
 
+
+# This function initializes the tile grid using the tiles in the LevelTileSheet and arranges them into a pallete grid
 def init_tile_grid():
     global tile_grid
     tile_grid = Grid(40, 26, 50, 50, (8, 13), -1, True, False, False)
@@ -1126,6 +1206,7 @@ def init_tile_grid():
     tile_grid.map = grid
 
 
+# Modularizes the function above to save on lines and increase readability - serves to check if the buffer can be popped
 def buffer_check(current_index, tile, grid, offset=0):
     if current_index[0] + len(tile.tiles[0]) + offset > tile_grid.cols:
         return False
@@ -1136,10 +1217,10 @@ def buffer_check(current_index, tile, grid, offset=0):
             if grid[current_index[1]][current_index[0] + i] != -1:
                 return False
     return True
-
 # Attempt at a buffer_draw failed due to not being able to modify grid enough in the way it is passed
 
 
+# Initializes the entity grid with the entities that are hard coded into the level editor, with the set sprite-sheet
 def init_entity_grid():
     global entity_grid
     entity_grid = Grid(8, 3, 50, 50, (8, 3), -1, False, True, True)
@@ -1154,19 +1235,25 @@ def init_entity_grid():
             return
 
 
+# Handler for the hotkey save function - will save a copy if it had an underscore, otherwise overwrites it
 def i_save():
     global game
     name = game._game.editor_level
     if name[0] == '_':
         name = name[1:]
+    elif name[:9] == 'official/_':
+        name = name[0:8] + name[10:]
     save(name)
 
 
+# Implements a similar to the save validation above with the action I/O involved in saving the level
 def save(name):
     global game
     if len(name) == 0:
         return
     if name[0] == "_":  # If it starts with an underscore, it's a in-built level, can't be replaced
+        return
+    elif name[:9] == 'official/_':
         return
 
     game._game.editor_level = name
@@ -1203,6 +1290,7 @@ def save(name):
     file.close()
 
 
+# Manages reading of a generic csv type string line (for most loading functions)
 def list_csv(buffer):
     data = []
     val = ""
@@ -1216,6 +1304,7 @@ def list_csv(buffer):
     return data
 
 
+# Manages reading of a csv type string line with points added to represent a list of tuples (for index)
 def list_csv_big(buffer):
     data = []
     unit = []
@@ -1236,6 +1325,7 @@ def list_csv_big(buffer):
     return data
 
 
+# Loads a level that is specified by the user, stopping if no level of that name exists
 def load_level(path):
     global level_tile_grid, level_entity_grid, level_loaded, game
 
@@ -1319,6 +1409,7 @@ def load_level(path):
     level_loaded = True
 
 
+# Loads the tile sheet (a file containing the index and spritesheet) to allow tiles to be rendered and used
 def load_tileSheet(path):
     global tile_grid
     # create an empty list to store the three indexes
@@ -1363,6 +1454,7 @@ inputs = Input()
 load_level(game._game.editor_level)
 
 
+# Allows you to play test the level you made, by changing game state to sandbox mode
 def play():
     game._game.launch_sandbox()
     game._game.close = False
@@ -1370,20 +1462,24 @@ def play():
 play_button = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 100), (100, 40), "Play", play)
 
 
+# Lets you return back to the main menu
 def menu():
     game._game.close = False
     frame.stop()
 menu_button = Button((CANVAS_DIMS[0] - 125, CANVAS_DIMS[1] - 50), (100, 40), "Menu", menu)
 
 
+# Intermediate function to allow the input object to have the click handler
 def click(pos):
     inputs.click(pos)
 
 
+# Intermediate function to allow the input object to have the drag handler
 def drag(pos):
     inputs.set_colour(pos)
 
 
+# Draws the actual level editor, making sure that the clock is reset unless it is loaded to sync animations
 def draw(canvas):
     global _game
 
@@ -1408,15 +1504,20 @@ def draw(canvas):
     else:
         game._game.clock.reset()
 
+
+# Intermediate function to reset the input box for loading levels after attempting to load
 def load(name):
     load_level(name)
     impFile.set_text("")
 
+
+# Intermediate function to reset the input box for adding a timer after attempting to add one
 def add_timer(time_str):
     if toolbar.addTimer(int(time_str)):
         addTimer.set_text("")
 
 
+# Intermediate function to santitize and reset the input box for specifying the new dimensions of the level
 def resize(input_str):
     input_dims = list_csv(input_str.strip("()"))
     # If entities will be cut, remove them from the list, except for player where it is repositioned to origin
@@ -1435,6 +1536,7 @@ def resize(input_str):
     changeDims.set_text("")
 
 
+# Handles key down events to allow the panning of the appropriate grids
 def key_down(key):
     # Perhaps have a select case
     if key == simplegui.KEY_MAP['up']:  # To control level camera
@@ -1473,6 +1575,8 @@ def key_down(key):
         i_save()
     elif key == simplegui.KEY_MAP['p']:  # Hotkey to play level
         play()
+
+# Creates a separate frame with its own dimensions and data on the side specifically for the level editor functions
 
 
 frame = simplegui.create_frame("LevelEditor", CANVAS_DIMS[0], CANVAS_DIMS[1])
