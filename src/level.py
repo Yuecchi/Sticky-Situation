@@ -141,22 +141,9 @@ def load_level(path):
     # open the tilesheet file
     file = open(path, "rt")
 
+    # data for locating and loading the tilesheet file attached to the level
     tilesheet_path = file.readline().strip("\n")
     tilesheet = tileEngine.load_tilesheet(tilesheet_path)
-
-    """
-    # read source image path
-    img_path = file.readline().strip("\n")
-
-    # read animation frame, types and animation speed index
-    # data and store them as individual lists
-    for i in range(3):
-        buffer = file.readline().strip("\n")
-        index.append(list_csv(buffer))
-
-    # create new tilesheet
-    tilesheet = Tilesheet(img_path, index[0], index[1], index[2])
-    """
 
     # create an empty list to store the map
     map = []
