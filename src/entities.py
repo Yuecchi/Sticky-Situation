@@ -198,11 +198,11 @@ class PlayerDeath(IntEnum):
     WATER = 4
     GHOST = 5
 
-# the player class
+# the player class contains the all instance data for the player controlled entity (the horse)
 class Player(Entity):
 
-    ENTITY_TYPE = 1
-    WALK_SPEED  = 1 / 32
+    ENTITY_TYPE = 1 # player entity type
+    WALK_SPEED  = 1 / 32 # player movement speed
     DEFAULT_STATE = PlayerState.IDLE_DOWN
     SPRITESHEET = simplegui._load_local_image('../assets/entities/horse.png')
 
@@ -233,6 +233,8 @@ class Player(Entity):
 
         self.hitbox = Hitbox(self.pos, 0.6)
 
+    # changes the current player state, which determines the players animation
+    # moving state and move distance (depedant on state)
     def change_state(self, state):
 
         def idle_up(self):
@@ -317,6 +319,8 @@ class Player(Entity):
 
         states[state](self)
 
+    # check the current tile the player is standing on the determine which action to take (if any)
+    # on the current frame
     def check_current_tile(self, current_tile):
 
         def tile_empty(self):
@@ -425,6 +429,9 @@ class Player(Entity):
 
         tiles[current_tile.type](self)
 
+    # check the tile the player is moving into, to determine how to respond
+    # in most cases this means whether the player can move into the tile or not
+    # but for some unique behaviour has been defined
     def check_destination_tile(self, current_tile, destination_tile):
 
         def tile_empty(self, current_tile, destination_tile):
@@ -571,6 +578,9 @@ class Player(Entity):
 
         return tiles[destination_tile.type](self, current_tile, destination_tile,)
 
+    # checks what type of entity is in the square the player is trying to move into
+    # depending on the entity type, this can have the player perform certain unique behaviour
+    # such as pushing a block
     def check_entity(self, entity): # player check entity method
 
         def player(self, entity):
@@ -633,6 +643,7 @@ class Player(Entity):
 
         return entities[entity.ENTITY_TYPE](self, entity)
 
+    # checks if there is any trigger in the target location, and if so attempts to switch it
     def check_trigger(self, entity):
 
         if not entity.isTrigger:
@@ -687,10 +698,13 @@ class Player(Entity):
             self.go_idle()
             self.destination = self.pos
 
+    # sets the player to an idle state based on
+    # the players last direction they were facing
     def go_idle(self):
         if not self.dead:
             self.change_state(self.state % 4)
 
+    # places the player in a new location on the entity map
     def update_entitymap_pos(self):
         # move out of old location on entity map
         oldpos = self.pos - (self.direction * self.distance)
@@ -700,6 +714,8 @@ class Player(Entity):
         # move into new location on entity map
         game._game.level.entitymap[self.pos.y][self.pos.x] = self.id
 
+    # kills the player and determines which death animation to use based on the
+    # circumstances of how the player died
     def kill(self, death = PlayerDeath.SPIKE):
         if not self.dead:
             # set dead flag to true
@@ -761,6 +777,8 @@ class Player(Entity):
             # set respawn time
             self.respawn_time = self.respawn_timer * 60
 
+    # resets certain flas and respawns the player in
+    # the player's starting location
     def respawn(self):
         clear_missiles()
         self.dead = False
@@ -860,6 +878,7 @@ class PushBlock(Entity):
         self.hitbox.update(self.pos)
         self.direction = None
 
+    # check the current tile the block is sitting on to determine how it should behave on the next frame
     def check_current_tile(self, current_tile):
 
         def tile_empty(self):
@@ -960,6 +979,7 @@ class PushBlock(Entity):
 
         tiles[current_tile.type](self)
 
+    # checks the tile the block is moving into the determine whether it can move into it or not
     def check_destination_tile(self, current_tile, destination_tile):
 
         def tile_empty(self, current_tile, destination_tile):
