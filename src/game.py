@@ -33,22 +33,34 @@ import menu
 import handlers
 from random import randint
 
+# canvas width and height
 FRAMEWIDTH, FRAMEHEIGHT = 640, 480
 
+# class for keeping track of the number of frames which have pass
+# this is used for regulating sprite animation speeds
 class Clock:
 
     def __init__(self):
-        self.t = 0
+        self.t = 0 # keeps track of the number of frames which have been processed since the program was launched
 
+    # method which increments the frame count (this is to be called on each program loop)
     def tick(self):
         self.t += 1
 
+    # method for regulating the speed of processes within the game
+    # any processing which happens within the game can be throttled to
+    # only happen every 'x' number of frames according to the 'rate' which is
+    # passed to this function
     def transition(self, rate):
         return not(self.t % rate)
 
+    # sets the number of frames which have been processed to zero
     def reset(self):
         self.t = 0
 
+# enum for storing game states
+# game states are using to keep track of which group of actions
+# the game shpould currently be performing
 class GameState(IntEnum):
 
     TITLE          = 1
@@ -58,17 +70,20 @@ class GameState(IntEnum):
     EDITOR         = 5
     LEVEL_COMPLETE = 6
 
+# class for storing static images and drawing with less hassle
 class StaticImage:
 
     def __init__(self, img):
 
-        self.img = img
-        self.dims = (img.get_width(), img.get_height())
-        self.src_pos = (self.dims[0] /  2, self.dims[1] / 2)
+        self.img = img # source file for the static image
+        self.dims = (img.get_width(), img.get_height()) # dimensions of the sources image file
+        self.src_pos = (self.dims[0] /  2, self.dims[1] / 2) # center position of the source image
 
+    # draws the source image unscaled at a given target position
     def draw(self, canvas, pos):
         canvas.draw_image(self.img, self.src_pos, self.dims, pos, self.dims)
 
+# the game class
 class Game:
 
     TITLE_BG_SRC = simplegui._load_local_image("../assets/menus/title_menu/title_background.png")

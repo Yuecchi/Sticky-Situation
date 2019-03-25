@@ -19,6 +19,8 @@ def make_frame():
     frame.set_mouseclick_handler(handlers.mouse.mouseclick)
     game.get_frame(frame)
 
+    # checks if the program is exiting the editor, so it knows
+    # to transition to the title screen
     if game._game.state == game.GameState.EDITOR:
         game._game.change_state(game.GameState.TITLE)
 
@@ -33,18 +35,30 @@ def make_frame():
     frame.add_label("")
     frame.add_label("Press P to open the menu")
 
+    # strats the main program loop for the game
     frame.start()
 
 # THE WORLDS GREATEST HACK1!!
+
+# boolean to check if the level editor has already been imported before
 gotem = False
+
+# allows the program to switch between two frames
 while True:
 
+    # initilaizes the frame which contains the main game
     make_frame()
+
+    # checks if the game is meant to be closing
+    # this will only occur is the 'x' button the the window is clicked
+    # and in all other cases the program knows the game is transitioning between
+    # the editor and the main game
     if game._game.close:
         break
     else:
         game._game.close = True
 
+    # swithes from the main games frame to the editor's frame
     if game._game.state == game.GameState.EDITOR:
         if not gotem:
             import levelEditor
@@ -53,6 +67,9 @@ while True:
         else:
             importlib.reload(levelEditor)
             levelEditor.EDITOR_MUSIC.rewind()
+
+        # checks if the program is meant to close (if the 'x' button
+        # been clicked or not_)
         if game._game.close:
             break
         else:
