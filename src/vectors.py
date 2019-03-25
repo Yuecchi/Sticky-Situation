@@ -3,6 +3,9 @@ import tileEngine
 
 TILESIZE = tileEngine.TILESIZE
 
+# the vector class was modified slightly to make arithmetic
+# operations with the magic methods faster
+
 # The Vector class
 class Vector:
 
