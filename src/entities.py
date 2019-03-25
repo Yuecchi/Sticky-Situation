@@ -1945,11 +1945,6 @@ class Missile(Projectile):
 
             entity = get_entity(p)
             if entity:
-                """
-                if entity.ENTITY_TYPE == PushBlock.ENTITY_TYPE:
-                    self.explode()
-                    return
-                """
                 if entity.isDoor:
                     if not entity.open:
                         self.explode()

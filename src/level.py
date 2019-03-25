@@ -120,7 +120,9 @@ class Level:
         file.write("CONTACTS_END\n")
 
         file.close()
-
+# a function used for reading lines of comma separated data from files
+# storing the individual data values as elements of a list
+# (probably should've just used the one inb tileEngine.py...oh well)
 def list_csv(buffer):
     data = []
     val = ""
@@ -182,6 +184,9 @@ def load_level(path):
             break
 
         data = list_csv(buffer)
+
+        # uses the entity data in the level file to build the list of entities
+        # for the level
         if data[0] == Player.ENTITY_TYPE: # 1
             Player(Vector((data[1], data[2])))
         elif data[0] == PushBlock.ENTITY_TYPE: # 2
@@ -225,6 +230,7 @@ def load_level(path):
             
         data = list_csv(buffer)
 
+        # uses the level file data to set the contacts for each trigger in the level
         if Entity.entities[data[0] - 1].ENTITY_TYPE != Button.ENTITY_TYPE:
             Entity.entities[data[0] - 1].add_contact(Entity.entities[data[1] - 1])
         else:
