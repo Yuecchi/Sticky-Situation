@@ -127,7 +127,6 @@ class Game:
     )
 
     MUSIC = (
-        simplegui._load_local_sound("../assets/levels/music/bald.ogg"),
         simplegui._load_local_sound("../assets/levels/music/beethoven.ogg"),
         simplegui._load_local_sound("../assets/levels/music/carmina.ogg"),
         simplegui._load_local_sound("../assets/levels/music/holst.ogg"),
