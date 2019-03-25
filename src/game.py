@@ -104,7 +104,7 @@ class Game:
     GAME_OVER_IMG_SRC = simplegui._load_local_image('../assets/ui/game_over.png')
     GAME_OVER_IMG = StaticImage(GAME_OVER_IMG_SRC)
 
-    TITLE_MUSIC = simplegui._load_local_sound("../assets/menus/title_menu/SS_Original.wav")
+    TITLE_MUSIC = simplegui._load_local_sound("../assets/menus/title_menu/SS_Original.ogg")
 
     YOU_WIN_IMG_SRC = (
         simplegui._load_local_image('../assets/ui/SS-win-1.png'),
