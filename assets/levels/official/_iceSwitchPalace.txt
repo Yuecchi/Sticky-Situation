@@ -39,3 +39,4 @@ CONTACTS_START
 13,16
 14,15
 CONTACTS_END
+../assets/levels/official/_hellMaze.txt
